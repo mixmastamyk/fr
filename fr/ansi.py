@@ -1,8 +1,10 @@
 '''
     ansilib, a library of common console color functions.
-    (C) 2005-12, Mike Miller - Released under the GPL, version 3+.
+    (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
 '''
+from __future__ import print_function
 import sys, os
+out             = sys.stdout.write
 
 if True:  # fold init
     # fg
@@ -100,15 +102,16 @@ def colorstart(fgcolor, bgcolor, weight):
     if weight:          weight = bold
     else:               weight = norm
     if bgcolor:
-        sys.stdout.write('[%s;%s;%sm' % (weight, fgcolor, bgcolor))
+        out('[%s;%s;%sm' % (weight, fgcolor, bgcolor))
     else:
-        sys.stdout.write('[%s;%sm' % (weight, fgcolor))
+        out('[%s;%sm' % (weight, fgcolor))
 
 
 def colorend(cr=False):
     '''End color styles.  Resets to default terminal colors.'''
-    sys.stdout.write('[0m')
-    if cr: sys.stdout.write('\n')
+    out('[0m')
+    if cr:
+        out('\n')
     sys.stdout.flush()
 
 
@@ -117,7 +120,7 @@ def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
         def cprint(text, fg=white, bg=blackbg, w=norm, cr=True):
     '''
     colorstart(fg, bg, w)
-    sys.stdout.write(text)
+    out(text)
     colorend(cr)
 
 
@@ -138,7 +141,7 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
         else:                   bkcolor = data[0][2]   # redbg
         cprint(cbrackets[0], data[0][2], bkcolor, None, None)
     else:
-        sys.stdout.write(cbrackets[0])
+        out(cbrackets[0])
 
     for i, part in enumerate(data):
         # unpack data
@@ -150,7 +153,7 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
         if incolor and not ( fgcolor is None):
             cprint(char * width, fgcolor, bgcolor, bold, False)
         else:
-            sys.stdout.write((char * width))
+            out((char * width))
 
         if i == (datalen - 1):   # correct last one
             if position < maxwidth:
@@ -158,9 +161,9 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
                     cprint(char * (maxwidth-position), fgcolor, bgcolor,
                            bold, False)
                 else:
-                    sys.stdout.write(char * (maxwidth-position))
+                    out(char * (maxwidth-position))
             elif position > maxwidth:
-                sys.stdout.write(chr(8) + ' ' + chr(8))  # backspace
+                out(chr(8) + ' ' + chr(8))  # backspace
 
     # Print right bracket in correct color:
     if cbrackets and incolor:
@@ -168,7 +171,7 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
         else:                   bkcolor = data[1][3] # greenbg
         cprint(cbrackets[1], data[-1][2], bkcolor, None, None)
     else:
-        sys.stdout.write(cbrackets[1])
+        out(cbrackets[1])
 
 
 def get_palette(hicolor):
@@ -200,7 +203,6 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
     maxwidth = maxwidth - 2         # because of brackets
 
     # setup
-    out = sys.stdout
     csi, csib, _, pal, rst, plen = get_palette(hicolor)
 
     empty = data[-1][0]
@@ -209,9 +211,9 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
 
     # Print left bracket in correct color:
     if cbrackets and incolor:
-        out.write((csi % pal[0]) + cbrackets[0])  # start bracket
+        out((csi % pal[0]) + cbrackets[0])  # start bracket
     else:
-        out.write(cbrackets[0])
+        out(cbrackets[0])
 
     for i, part in enumerate(data):
         char, pcnt, fgcolor, bgcolor, bold = part
@@ -231,31 +233,31 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
                 colorind = fgcolor or min(int((j+offset)/bucket), (plen-1))
                 #~ colorind = fgcolor or get_color_index(j, offset, maxwidth, plen)
                 if colorind == lastind:
-                    out.write(char)
+                    out(char)
                 else:
                     color = fgcolor or pal[colorind]
-                    out.write((csib % color) + char)
+                    out((csib % color) + char)
                 lastind = colorind
         else:
-            out.write((char * width))
+            out((char * width))
 
         if i == (datalen - 1):          # check if last one correct
             if position < maxwidth:
                 rest = maxwidth - position
                 if incolor: # char
-                    out.write((csib % pal[-1]) + (empty * rest))
+                    out((csib % pal[-1]) + (empty * rest))
                 else:
-                    out.write(char * rest)
+                    out(char * rest)
             elif position > maxwidth:
-                out.write(chr(8) + ' ' + chr(8))  # backspace
+                out(chr(8) + ' ' + chr(8))  # backspace
 
     # Print right bracket in correct color:
     if cbrackets and incolor:
         lastcolor = darkred if (hicolor and endpcnt > 1) else pal[-1]
-        out.write((csi % lastcolor) + cbrackets[1])    # end bracket
+        out((csi % lastcolor) + cbrackets[1])    # end bracket
         colorend()
     else:
-        out.write(cbrackets[1])
+        out(cbrackets[1])
 
 
 # -------------------------------------------------------------------
@@ -286,7 +288,7 @@ def get_term_size():
             csbi = create_string_buffer(22)
             res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
         except Exception as err:
-            print 'ERROR:', err.__class__.__name__, str(err)
+            print('ERROR:', err.__class__.__name__, str(err))
         if res:
             import struct
             (bufx, bufy, curx, cury, wattr, left, top, right, bottom,

@@ -1,8 +1,9 @@
+from __future__ import print_function
 import subprocess
 
 
 class Info(dict):
-    'Dict that acts like an object.'
+    ''' Dict that acts like an object. '''
     def __getattr__(self, attr):
         return self[attr]
 
@@ -15,8 +16,8 @@ def run(cmd, shell=True, debug=False):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
     (out, _) = proc.communicate()  # no need for stderr
     if debug:
-        print cmd
-        print out
+        print(cmd)
+        print(out)
     return out
 
 

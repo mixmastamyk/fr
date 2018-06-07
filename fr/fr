@@ -6,7 +6,7 @@
 
     usage: %prog [options]
 '''
-#~ from __future__ import print_function
+from __future__ import print_function
 
 if True:  # foldable init
     import sys, os
@@ -14,7 +14,8 @@ if True:  # foldable init
     from optparse import OptionParser
     from fr import ansi
 
-    __version__     = '1.38'
+    __version__     = '3.00.a100'
+    out             = sys.stdout.write
     # Set defaults
     _debug          = False
     _binary         = False
@@ -52,13 +53,20 @@ if True:  # foldable init
         import fr.windows as pform
     elif plat == 'dar':
         import fr.darwin as pform
-    for pvar in dir(pform):  # load icons
+
+    # load icons from module
+    for pvar in dir(pform):
         if pvar.startswith('_') and pvar.endswith('ico'):
             globals()[pvar] = getattr(pform, pvar)
 
 
+def out(*args):
+    'temporary output until move to 3.x'
+    print(*args, end='')
+
+
 def fmtstr(text, colorstr=None, leftjust=False, trunc=True):
-    '''Formats and returns a given string according to specifications.'''
+    ''' Formats and returns a given string according to specifications. '''
     if leftjust:  width = -colwidth
     else:         width =  colwidth
     if trunc:
@@ -66,12 +74,14 @@ def fmtstr(text, colorstr=None, leftjust=False, trunc=True):
         if len(text) > cwd:
             text = truncstr(text, cwd, align=trunc)  # truncate w/ellipsis
     value = '%%%ss' % width %  text
-    if opts.incolor and colorstr:   return colorstr % value
-    else:                           return value
+    if opts.incolor and colorstr:
+        return colorstr % value
+    else:
+        return value
 
 
 def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
-    '''Formats and returns a given number according to specifications.'''
+    ''' Formats and returns a given number according to specifications. '''
     # get precision
     if override_prec is None:
         override_prec = opts.precision
@@ -88,22 +98,24 @@ def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
             result = truncstr(result, colwidth)
 
     # Add color if needed
-    if opts.incolor and colorstr:   return colorstr % result
-    else:                           return result
+    if opts.incolor and colorstr:
+        return colorstr % result
+    else:
+        return result
 
 
 def print_meminfo(meminfo, widelayout, incolor):
-    'Memory information output function.'
+    ''' Memory information output function. '''
     # prep Mem numbers
     totl = meminfo.MemTotal
     cach = meminfo.Cached + meminfo.Buffers
     free = meminfo.MemFree
     used = meminfo.Used
     if opts.debug:
-        print 'totl:', totl
-        print 'used:', used
-        print 'free:', free
-        print 'cach:', cach
+        print('totl:', totl)
+        print('used:', used)
+        print('free:', free)
+        print('cach:', cach)
 
     usep = float(used) / totl * 100           # % used of total ram
     cacp = float(cach) / totl * 100           # % cache
@@ -136,69 +148,70 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, frep, None,  None, False),               # free
     )
     if widelayout:
-        print fmtstr(_ramico + ' RAM', leftjust=True),
-        if opts.showlbs:  print fmtstr(' '),
-        print fmtval(totl), fmtval(used, rlblcolor),
-        print fmtval(free, rlblcolor),
+        out(fmtstr(_ramico + ' RAM', leftjust=True))
+        if opts.showlbs:
+            out(fmtstr(' '))
+        out(fmtval(totl), fmtval(used, rlblcolor))
+        out(fmtval(free, rlblcolor))
 
-        # Print graph
-        print ' ',  # two extra spaces right
+        # print graph
+        out(' ')  # two extra spaces right
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print ' ', fmtval(cach, swap_color)
+        print(' ', fmtval(cach, swap_color))
     else:
-        print fmtstr(_ramico + ' RAM', leftjust=True), fmtstr(' '),
-        print fmtval(totl), fmtval(used, rlblcolor), fmtval(free, rlblcolor),
-        print ' ', fmtval(cach, swap_color)
+        out(fmtstr(_ramico + ' RAM', leftjust=True), fmtstr(' '))
+        out(fmtval(totl), fmtval(used, rlblcolor), fmtval(free, rlblcolor))
+        print(' ', fmtval(cach, swap_color))
 
-        # Print graph
-        print fmtstr(' '), # one space
+        # print graph
+        out(fmtstr(' ')) # one space
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print '\n' # extra line in narrow layout
+        print('\n') # extra line in narrow layout
 
     # Swap time:
     data = (
-        #~ ('%', swfp, ansi.grey, ansi.redbg, False),   # Used w/ foreground
         (_usedico, swup, None,  None, pform.boldbar),    # used
         (_usedico, swcp, None,  None, pform.boldbar),    # cache
         (_freeico, swfp, None,  None, False),    # free
     )
     if widelayout:
-        print fmtstr(_diskico + ' SWAP', leftjust=True),
-        if opts.showlbs:  print fmtstr(' '),
+        out(fmtstr(_diskico + ' SWAP', leftjust=True))
+        if opts.showlbs:
+            out(fmtstr(' '))
         if swpt:
-            print fmtval(swpt),
-            print fmtval(swpu, slblcolor), fmtval(swpf, slblcolor),
+            out(fmtval(swpt))
+            out(fmtval(swpu, slblcolor), fmtval(swpf, slblcolor))
         else:
-            print fmtstr(_emptico, ansi.fdimbb)
+            print(fmtstr(_emptico, ansi.fdimbb))
 
-        # Print graph
+        # print graph
         if swpt:
-            print ' ',  # two extra spaces right
+            out(' ')  # two extra spaces right
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             if swpc:
-                print ' ', fmtval(swpc, swap_color),
-            print
+                out(' ', fmtval(swpc, swap_color))
+            print()
     else:
-        print fmtstr(_diskico + ' SWAP', leftjust=True),
+        out(fmtstr(_diskico + ' SWAP', leftjust=True))
         if swpt:
-            print fmtstr(' '), fmtval(swpt),
-            print fmtval(swpu, slblcolor), fmtval(swpf, slblcolor),
+            out(fmtstr(' '), fmtval(swpt))
+            out(fmtval(swpu, slblcolor), fmtval(swpf, slblcolor))
             if swpc:
-                print ' ', fmtval(swpc, swap_color),
-            print
+                out(' ', fmtval(swpc, swap_color))
+            print()
 
-            # Print graph
-            print fmtstr(' '),  # one space
+            # print graph
+            out(fmtstr(' '))  # one space
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
-            print
+            print()
         else:
-            print fmtstr(_emptico, ansi.fdimbb)
-        print
-    print  # extra newline that separates mem and disk sections
+            print(fmtstr(_emptico, ansi.fdimbb))
+        print()
+    print() # extra newline that separates mem and disk sections
 
 
 def print_diskinfo(diskinfo, widelayout, incolor):
@@ -233,27 +246,27 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         else:
             lblcolor = None
 
-        # Print stats
+        # print stats
         data = (
             (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar), # Used
             (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
         )
         if widelayout:
-            print fmtstr('%s %s' % (ico, disk.dev), leftjust=True),
+            out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
             if opts.showlbs:
-                print fmtstr(disk.label, leftjust=True),
+                out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
                 if disk.rw:
-                    print fmtval(disk.cap), fmtval(disk.used, lblcolor),
-                    print fmtval(disk.free, lblcolor),
+                    out(fmtval(disk.cap), fmtval(disk.used, lblcolor))
+                    out(fmtval(disk.free, lblcolor))
                 else:
-                    print fmtval(disk.cap), fmtstr(''),
-                    print fmtstr(_emptico, ansi.fdimbb),
+                    out(fmtval(disk.cap), fmtstr(''))
+                    out(fmtstr(_emptico, ansi.fdimbb))
             else:
-                print fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''),
+                out(fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''))
 
             if disk.cap:
-                print ' ',
+                out(' ')
                 if disk.rw:
                     ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
                                  cbrackets=_brckico)
@@ -261,30 +274,30 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
 
                 if opts.relative and opts.width != gwidth:
-                    print ' ' * (opts.width - gwidth - 1),
-                print ' ', fmtstr(disk.mntp, leftjust=True, trunc='left'),
-            print
+                    out(' ' * (opts.width - gwidth - 1))
+                out(' ', fmtstr(disk.mntp, leftjust=True, trunc='left'))
+            print()
         else:
-            print fmtstr('%s %s' % (ico, disk.dev), leftjust=True),
+            out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
             if opts.showlbs:
-                print fmtstr(disk.label, leftjust=True),
+                out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
-                print fmtval(disk.cap), fmtval(disk.used, lblcolor),
-                print fmtval(disk.free, lblcolor),
+                out(fmtval(disk.cap), fmtval(disk.used, lblcolor))
+                out(fmtval(disk.free, lblcolor))
             else:
-                print fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''),
-            print ' ', fmtstr(disk.mntp, leftjust=True, trunc=False)
+                out(fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''))
+            print(' ', fmtstr(disk.mntp, leftjust=True, trunc=False))
 
             if disk.cap:
-                print fmtstr(' '),
+                out(fmtstr(' '))
                 if disk.rw:
                     ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
                                  cbrackets=_brckico)
                 else:
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
-            print
-            print
-    print
+            print()
+            print()
+    print()
 
 
 def set_outunit(unit):
@@ -309,10 +322,11 @@ def set_outunit(unit):
         if opts.precision == -1:  opts.precision = 3
         result = 1099511627776, 'Tebibyte'
     else:    # Default
-        print 'Warning: incorrect parameter: %s.' % unit
+        print('Warning: incorrect parameter: %s.' % unit)
         result = _outunit
 
-    if opts.precision == -1:  opts.precision = 0
+    if opts.precision == -1:
+        opts.precision = 0
     return result
 
 
@@ -378,8 +392,8 @@ def setup():
             opts.incolor = True
             opts.hicolor = pform.hicolor
         elif plat == 'win':
-            print '\nError: color support not available.  Install colorama:'
-            print '       pip install colorama\n'
+            print('\nError: color support not available.  Install colorama:')
+            print('       pip install colorama\n')
     else:
         opts.incolor = False
 
@@ -436,26 +450,26 @@ def main():
     else:
         outunit, unitstr = set_outunit('-%s' % opts.unit.lower())
     if opts.debug:
-        print 'opts:', opts    # or will get clobbered by set
-        print 'unitstr:', unitstr
+        print('opts:', opts)    # or will get clobbered by set
+        print('unitstr:', unitstr)
 
     # Level One Diagnostic
-    print ( '\nFree Resources in Blocks of 1 %s (%s bytes)' %
+    out(( '\nFree Resources in Blocks of 1 %s (%s bytes)' %
            (unitstr, fmtval(outunit, override_prec=0, spacing=False,
-                            trunc=False)) ),
+                            trunc=False)) ))
 
     meminfo = pform.get_meminfo(outunit, debug=opts.debug)
     if not meminfo:
-        print '\nError: Couldn\'t read memory information.'
+        print('\nError: Couldn\'t read memory information.')
         sys.exit(errno.EIO)
 
     diskinfo = pform.get_diskinfo(outunit, show_all=opts.all, debug=opts.debug,
                                   local_only=opts.local)
     if not diskinfo:
-        print '\nError: Couldn\'t read disk information.'
+        print('\nError: Couldn\'t read disk information.')
         sys.exit(errno.EIO)
 
-    print # after possible diskinfo ukisks warning
+    print() # after possible diskinfo/dbus/udisks warning
     # figure out graph width
     for disk in diskinfo:
         pathlen = len(disk.mntp)
@@ -472,12 +486,12 @@ def main():
         if widelayout:  opts.width = opts.columns - taken
         else:           opts.width = 58
 
-    print  # Headers
-    print fmtstr('DEVICE', leftjust=True),
+    print() # Headers
+    out(fmtstr('DEVICE', leftjust=True))
     if opts.showlbs:
-        print fmtstr('VOLUME', leftjust=True),
+        out(fmtstr('VOLUME', leftjust=True))
     for header in ['CAPACITY', 'USED', 'FREE']:
-        print fmtstr(header),
+        out(fmtstr(header))
 
     if widelayout:
         if ' ' in pform.col_lblw:   # figure expanding label (on posix)
@@ -489,11 +503,11 @@ def main():
         else:
             lbl = pform.col_lblw    # win
             extspace = 3
-        print ' ' * (opts.width + extspace), fmtstr(lbl),
+        out(' ' * (opts.width + extspace), fmtstr(lbl))
     else:
-        print ' ',
-        print fmtstr(pform.col_lbls),
-    print
+        print(' ',)
+        out(fmtstr(pform.col_lbls))
+    print()
     print_meminfo(meminfo, widelayout, incolor)
     print_diskinfo(diskinfo, widelayout, incolor)
 

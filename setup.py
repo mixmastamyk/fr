@@ -14,8 +14,8 @@ with open('fr/fr') as f:
 
 # readme is needed at upload time, not install time
 try:
-    with open('readme.rst') as f:                  # no unicode for older vers.
-        long_description = f.read().decode('utf8') #.encode('ascii', 'replace')
+    with open('readme.rst', encoding='utf8') as f:
+        long_description = f.read()
 except IOError:
     long_description = ''
 
@@ -54,7 +54,7 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Topic :: System :: Hardware',
         'Topic :: System :: Monitoring',
         'Topic :: System :: Systems Administration',

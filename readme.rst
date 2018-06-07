@@ -47,11 +47,15 @@ but not virtualenv.
 Linux
 ~~~~~~~~~
 
-Need ``pip``?  On Ubuntu::
+As Dbus/Udisks are not installed by default on Precise+ Server
+(and possibly others),
+they can be if you'd like to print volume labels::
 
-    sudo apt-get install python-pip
+    sudo apt install python3-dbus udisks2
+    sudo apt install python3-pip  # Need ``pip``?
 
-For Red Hat: ``s/apt-get/yum/``.
+
+For Red Hat: ``s/apt/dnf/``.
 Or follow the
 `manual instructions <http://stackoverflow.com/a/12234724/450917>`_.
 
@@ -63,12 +67,7 @@ If you'd like the development version instead::
 
     sudo pip install https://bitbucket.org/mixmastamyk/fr/get/default.zip
 
-As Udisks is not installed by default on Precise+ Server (and possibly others),
-it can be installed if you'd like to print volume labels::
 
-    sudo apt-get install udisks2
-
-use ``udisks`` before Wily.
 
 |
 

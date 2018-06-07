@@ -1,8 +1,9 @@
 '''
     darwin.py - (C) 2013, Jonathan Eunice
-    derived from linux.py - (C) 2012-13, Mike Miller
+    derived from linux.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 '''
+from __future__ import print_function
 import os, locale, re
 from os.path import basename
 from fr.utils import Info, run
@@ -72,7 +73,8 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
     except IOError:
         return None
 
-    if debug:  print disks
+    if debug:
+        print(disks)
     devices = sorted(disks.keys())
     return [ disks[device]  for device in devices ]
 
@@ -125,6 +127,7 @@ def get_meminfo(outunit, debug=False):
         raise ValueError("Can't parse vm.swapusage line from sysctl '{0}'"
                         ).format(su)
 
-    if debug:  print meminfo
+    if debug:
+        print(meminfo)
     return meminfo
 

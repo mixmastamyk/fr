@@ -1,7 +1,8 @@
 '''
-    windows.py - (C) 2012-13, Mike Miller
+    windows.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 '''
+from __future__ import print_function
 import sys, os, locale, stat, platform
 try:
     from winstats import ( _diskusage, get_drives, get_drive_type, get_fs_usage,
@@ -93,7 +94,8 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
             disk.rw = False
         disks[drive] = disk
 
-    if debug:  print disks
+    if debug:
+        print(disks)
     keys = sorted(disks.keys())
     return [ disks[dev]  for dev in keys ]
 
@@ -145,20 +147,21 @@ def get_meminfo(outunit, debug=False):
     if debug:
         import locale
         fmt = lambda x: locale.format('%d', x, True)
-        print
-        print 'TotalPhys:', fmt(totl)
-        print 'AvailPhys:', fmt(mstat.AvailPhys)
-        print 'MemoryLoad:', fmt(mstat.MemoryLoad)
-        print
-        print 'used:', fmt(used)
-        print 'left:', fmt(left)
-        if 'free' in locals(): print 'PDH Free:', fmt(free)
-        print 'SystemCacheBytes:', fmt(pinf.SystemCacheBytes)
-        print
-        print 'TotalPageFile:', fmt(mstat.TotalPageFile)
-        print 'AvailPageFile:', fmt(mstat.AvailPageFile)
-        print 'TotalPageFile fixed:', fmt(swpt)
-        print 'AvailPageFile fixed:', fmt(swpf)
+        print()
+        print('TotalPhys:', fmt(totl))
+        print('AvailPhys:', fmt(mstat.AvailPhys))
+        print('MemoryLoad:', fmt(mstat.MemoryLoad))
+        print()
+        print('used:', fmt(used))
+        print('left:', fmt(left))
+        if 'free' in locals():
+            print('PDH Free:', fmt(free))
+        print('SystemCacheBytes:', fmt(pinf.SystemCacheBytes))
+        print()
+        print('TotalPageFile:', fmt(mstat.TotalPageFile))
+        print('AvailPageFile:', fmt(mstat.AvailPageFile))
+        print('TotalPageFile fixed:', fmt(swpt))
+        print('AvailPageFile fixed:', fmt(swpf))
 
     return meminfo
 
