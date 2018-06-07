@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# hg stuff
+.hg
+.hgignore
+
+# project
+readme.html
+old/

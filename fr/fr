@@ -1,0 +1,503 @@
+#!/usr/bin/python
+'''
+    %prog - Free Resource Printer - (C) 2005-2018, Mike Miller
+    A program to print available free resources in delicious flavors.
+    License: GPLv3+.
+
+    usage: %prog [options]
+'''
+#~ from __future__ import print_function
+
+if True:  # foldable init
+    import sys, os
+    import errno, locale, math
+    from optparse import OptionParser
+    from fr import ansi
+
+    __version__     = '1.38'
+    # Set defaults
+    _debug          = False
+    _binary         = False
+    _incolor        = 'auto'
+    _showlbs        = 'auto'
+    _outunit        = 1000000, 'Megabyte'  # 1 Megabyte default
+    _graphwidth     = 0
+    _precision      = -1
+    _colwidth       = 10
+    _extra_cols_at  = 110
+    _extra_cols_cap = 4
+
+    # "icons"
+    _ramico         = u'\u2301'    # high voltage, u'\u26A1'
+    _diskico        = u'\u25AA'    # sq bullet default, u'\u25FE' u'\u25FC'
+    _unmnico        = u'\u25AB'    # sq bullet open, u'\u25FD' u'\u25FB'
+    _remvico        = u'\u21C4'    # l/r dbl arrows
+    _netwico        = u'\u21C5'    # u/d dbl arrows
+    _discico        = u'\u25D7'    # half circle
+    _emptico        = u'\u2205'    # empty set
+    _ellpico        = u'\u2026'    # ellipsis
+    _usedico        = u'\u2589'    # used
+    _cmonico        = u'\u2592'    # cache mono
+    _freeico        = u'\u2591'    # free
+    _warnico        = u'\u26A0'    # warning <!>
+    _brckico        = (u'\u2595', u'\u258F')
+
+    # discover environment, must be done before colorama to avoid crash on win
+    totcols, _ = ansi.get_term_size()
+
+    plat = sys.platform[:3]
+    if plat == 'lin':
+        import fr.linux as pform
+    elif plat == 'win':
+        import fr.windows as pform
+    elif plat == 'dar':
+        import fr.darwin as pform
+    for pvar in dir(pform):  # load icons
+        if pvar.startswith('_') and pvar.endswith('ico'):
+            globals()[pvar] = getattr(pform, pvar)
+
+
+def fmtstr(text, colorstr=None, leftjust=False, trunc=True):
+    '''Formats and returns a given string according to specifications.'''
+    if leftjust:  width = -colwidth
+    else:         width =  colwidth
+    if trunc:
+        cwd = (colwidth * 2) if trunc == 'left' and plat != 'win' else colwidth
+        if len(text) > cwd:
+            text = truncstr(text, cwd, align=trunc)  # truncate w/ellipsis
+    value = '%%%ss' % width %  text
+    if opts.incolor and colorstr:   return colorstr % value
+    else:                           return value
+
+
+def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
+    '''Formats and returns a given number according to specifications.'''
+    # get precision
+    if override_prec is None:
+        override_prec = opts.precision
+    fmt = '%%.%sf' % override_prec
+
+    # format with decimal mark, separators
+    result = locale.format(fmt, value, True)
+
+    if spacing:
+        result = '%%%ss' % colwidth % result
+
+    if trunc:
+        if len(result) > colwidth:   # truncate w/ellipsis
+            result = truncstr(result, colwidth)
+
+    # Add color if needed
+    if opts.incolor and colorstr:   return colorstr % result
+    else:                           return result
+
+
+def print_meminfo(meminfo, widelayout, incolor):
+    'Memory information output function.'
+    # prep Mem numbers
+    totl = meminfo.MemTotal
+    cach = meminfo.Cached + meminfo.Buffers
+    free = meminfo.MemFree
+    used = meminfo.Used
+    if opts.debug:
+        print 'totl:', totl
+        print 'used:', used
+        print 'free:', free
+        print 'cach:', cach
+
+    usep = float(used) / totl * 100           # % used of total ram
+    cacp = float(cach) / totl * 100           # % cache
+    frep = float(free) / totl * 100           # % free
+    rlblcolor = ansi.get_label_tmpl(usep, opts.width, opts.hicolor)
+
+    # Prepare Swap numbers
+    swpt = meminfo.SwapTotal
+    if swpt:
+        swpf = meminfo.SwapFree
+        swpc = meminfo.SwapCached
+        swpu = meminfo.SwapUsed
+        swfp = float(swpf) / swpt * 100       # % free of total sw
+        swcp = float(swpc) / swpt * 100       # % cache
+        swup = float(swpu) / swpt * 100       # % used
+        slblcolor = ansi.get_label_tmpl(swup, opts.width, opts.hicolor)
+    else:
+        swpf = swpc = swpu = swfp = swcp = swup = 0 # avoid /0 error
+        slblcolor = None
+    if opts.hicolor:
+        swap_color = ansi.csi8_blk % ansi.blu8
+    else:
+        swap_color = ansi.fbblue
+    cacheico = _usedico if incolor else _cmonico
+
+    # print RAM info
+    data = (
+        (_usedico, usep, None,  None, pform.boldbar),       # used
+        (cacheico, cacp, ansi.blue,  None, pform.boldbar),  # cache
+        (_freeico, frep, None,  None, False),               # free
+    )
+    if widelayout:
+        print fmtstr(_ramico + ' RAM', leftjust=True),
+        if opts.showlbs:  print fmtstr(' '),
+        print fmtval(totl), fmtval(used, rlblcolor),
+        print fmtval(free, rlblcolor),
+
+        # Print graph
+        print ' ',  # two extra spaces right
+        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                     cbrackets=_brckico)
+        print ' ', fmtval(cach, swap_color)
+    else:
+        print fmtstr(_ramico + ' RAM', leftjust=True), fmtstr(' '),
+        print fmtval(totl), fmtval(used, rlblcolor), fmtval(free, rlblcolor),
+        print ' ', fmtval(cach, swap_color)
+
+        # Print graph
+        print fmtstr(' '), # one space
+        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                     cbrackets=_brckico)
+        print '\n' # extra line in narrow layout
+
+    # Swap time:
+    data = (
+        #~ ('%', swfp, ansi.grey, ansi.redbg, False),   # Used w/ foreground
+        (_usedico, swup, None,  None, pform.boldbar),    # used
+        (_usedico, swcp, None,  None, pform.boldbar),    # cache
+        (_freeico, swfp, None,  None, False),    # free
+    )
+    if widelayout:
+        print fmtstr(_diskico + ' SWAP', leftjust=True),
+        if opts.showlbs:  print fmtstr(' '),
+        if swpt:
+            print fmtval(swpt),
+            print fmtval(swpu, slblcolor), fmtval(swpf, slblcolor),
+        else:
+            print fmtstr(_emptico, ansi.fdimbb)
+
+        # Print graph
+        if swpt:
+            print ' ',  # two extra spaces right
+            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                         cbrackets=_brckico)
+            if swpc:
+                print ' ', fmtval(swpc, swap_color),
+            print
+    else:
+        print fmtstr(_diskico + ' SWAP', leftjust=True),
+        if swpt:
+            print fmtstr(' '), fmtval(swpt),
+            print fmtval(swpu, slblcolor), fmtval(swpf, slblcolor),
+            if swpc:
+                print ' ', fmtval(swpc, swap_color),
+            print
+
+            # Print graph
+            print fmtstr(' '),  # one space
+            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                         cbrackets=_brckico)
+            print
+        else:
+            print fmtstr(_emptico, ansi.fdimbb)
+        print
+    print  # extra newline that separates mem and disk sections
+
+
+def print_diskinfo(diskinfo, widelayout, incolor):
+    'Disk information output function.'
+    if opts.relative:
+        base = max([ disk.ocap  for disk in diskinfo ])
+
+    for disk in diskinfo:
+        if disk.ismntd:     ico = _diskico
+        else:               ico = _unmnico
+        if disk.isrem:      ico = _remvico
+        if disk.isopt:      ico = _discico
+        if disk.isnet:      ico = _netwico
+        if disk.isram:
+            ico = _ramico
+            disk.dev = ''
+
+        if opts.relative and disk.ocap and disk.ocap != base:
+            # increase log size reduction by raising to 4th power:
+            gwidth = int((math.log(disk.ocap, base)**4) * opts.width)
+        else:
+            gwidth = opts.width
+
+        # check color settings
+        if disk.rw:
+            ffg = ufg = None        # auto colors
+        else:
+            ffg = ufg = ansi.dimbb  # dim or dark grey
+
+        if disk.cap and disk.rw:
+            lblcolor = ansi.get_label_tmpl(disk.pcnt, opts.width, opts.hicolor)
+        else:
+            lblcolor = None
+
+        # Print stats
+        data = (
+            (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar), # Used
+            (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
+        )
+        if widelayout:
+            print fmtstr('%s %s' % (ico, disk.dev), leftjust=True),
+            if opts.showlbs:
+                print fmtstr(disk.label, leftjust=True),
+            if disk.cap:
+                if disk.rw:
+                    print fmtval(disk.cap), fmtval(disk.used, lblcolor),
+                    print fmtval(disk.free, lblcolor),
+                else:
+                    print fmtval(disk.cap), fmtstr(''),
+                    print fmtstr(_emptico, ansi.fdimbb),
+            else:
+                print fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''),
+
+            if disk.cap:
+                print ' ',
+                if disk.rw:
+                    ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
+                                 cbrackets=_brckico)
+                else:
+                    ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
+
+                if opts.relative and opts.width != gwidth:
+                    print ' ' * (opts.width - gwidth - 1),
+                print ' ', fmtstr(disk.mntp, leftjust=True, trunc='left'),
+            print
+        else:
+            print fmtstr('%s %s' % (ico, disk.dev), leftjust=True),
+            if opts.showlbs:
+                print fmtstr(disk.label, leftjust=True),
+            if disk.cap:
+                print fmtval(disk.cap), fmtval(disk.used, lblcolor),
+                print fmtval(disk.free, lblcolor),
+            else:
+                print fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''),
+            print ' ', fmtstr(disk.mntp, leftjust=True, trunc=False)
+
+            if disk.cap:
+                print fmtstr(' '),
+                if disk.rw:
+                    ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
+                                 cbrackets=_brckico)
+                else:
+                    ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
+            print
+            print
+    print
+
+
+def set_outunit(unit):
+    ''' Sets the output unit and precision for future calculations and returns
+        the string representation of it.
+    '''
+    if unit == '-b' or unit == '-bb':   result = 1, 'Byte'
+    elif unit == '-k':                  result = 1000, 'Kilobyte'  # "real" kb
+    elif unit == '-kb':                 result = 1024, 'Kibibyte'  # binary kb
+    elif unit == '-m':                  result = 1000000, 'Megabyte'
+    elif unit == '-mb':                 result = 1048576, 'Mebibyte'
+    elif unit == '-g':
+        if opts.precision == -1:  opts.precision = 3  # new defaults
+        result = 1000000000, 'Gigabyte'
+    elif unit == '-gb':                 # binary gigabytes
+        if opts.precision == -1:  opts.precision = 3
+        result = 1073741824, 'Gibibyte'
+    elif unit == '-t':
+        if opts.precision == -1:  opts.precision = 3
+        result = 1000000000000, 'Terabyte'
+    elif unit == '-tb':
+        if opts.precision == -1:  opts.precision = 3
+        result = 1099511627776, 'Tebibyte'
+    else:    # Default
+        print 'Warning: incorrect parameter: %s.' % unit
+        result = _outunit
+
+    if opts.precision == -1:  opts.precision = 0
+    return result
+
+
+def setup():
+    'Parse, interpret command line options, discover environment.'
+    parser = OptionParser(usage=__doc__.rstrip(), version=__version__)
+    parser.add_option('-a', '--all', action='store_true',
+                      help='Include unmounted devices and tmpfs mounts.')
+    parser.add_option('-b', '--binary',
+                      action='store_true', dest='binary', default=_binary,
+                      help='Use propeller-head binary units (2^10) instead of '
+                      'human/SI units (10^3).')
+    parser.add_option('-d', '--debug',
+                      action='store_true', dest='debug', default=_debug,
+                      help='Turns on verbose debugging output.')
+    parser.add_option('-l', '--local', action='store_true',
+                      help='Include only local filesystems.')
+    parser.add_option('-p', '--precision', type='int', default=_precision,
+                      metavar='#', help='Set the number of dec. places shown.')
+    parser.add_option('-r', '--relative', action='store_true',
+                      help='Use logarithmic relative disk graph sizes.')
+
+    unit_choices = ('b', 'k', 'm', 'g', 't')
+    parser.add_option('-u', '--unit', default='m', choices=unit_choices,
+                      metavar='U', help='Selects the unit size: b, k, m, g, t')
+    parser.add_option('-w', '--width', type='int', metavar='#',
+                      default=_graphwidth,
+                      help='Set the width of the resource graphs.')
+
+    toggle_choices = ('auto', 'on', 'off')
+    parser.add_option('--color', dest='incolor', type='choice',
+                      default=_incolor, choices=toggle_choices, metavar='...',
+                      help='Color: (%s)' % ', '.join(toggle_choices))
+    parser.add_option('--labels', type='choice', default=_showlbs,
+                      choices=toggle_choices, metavar='...', dest='showlbs',
+                      help='Show volume label column: (%s)' %
+                      ', '.join(toggle_choices))
+    opts, args = parser.parse_args()
+
+    if args:
+        parser.error('No solo arguments allowed.')
+
+    # check environment
+    isatty = hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno())
+    if not isatty:  # must encode for file redirection
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+    # determine whether to use color
+    opts.hicolor = None
+    if opts.incolor == 'auto':
+        if isatty:
+            if 'NO_COLOR' in os.environ:
+                opts.incolor = False
+            elif pform.coloravail:
+                opts.incolor = True
+                opts.hicolor = pform.hicolor
+            else:
+                opts.incolor = False
+        else:
+            opts.incolor = False
+    elif opts.incolor == 'on':
+        if pform.coloravail:
+            opts.incolor = True
+            opts.hicolor = pform.hicolor
+        elif plat == 'win':
+            print '\nError: color support not available.  Install colorama:'
+            print '       pip install colorama\n'
+    else:
+        opts.incolor = False
+
+    # determine whether to show volume column
+    if opts.showlbs == 'auto':
+        if 'SSH_CLIENT' in os.environ:
+            opts.showlbs = False
+        else:
+            opts.showlbs = True
+    elif opts.showlbs == 'on':
+        opts.showlbs = True
+    else:
+        opts.showlbs = False
+
+    opts.columns = totcols
+    # expand colwidth if room, one column extra per ten over threshold
+    colwidth = _colwidth
+    extrawidth = opts.columns - _extra_cols_at
+    if extrawidth > 0:
+        colwidth += min(extrawidth / 10, _extra_cols_cap) # cap at
+
+    return opts, colwidth
+
+
+def truncstr(text, width, align='right'):
+    'Truncate a string, ending in ellipsis if necessary.'
+    before = after = ''
+    if align == 'left':
+        truncated = text[-width+1:]
+        before = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+    elif align:
+        truncated = text[:width-1]
+        after = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+
+    text = (before + truncated + after)
+    if plat == 'win':
+        text = text.encode(pform.encoding)  # :(
+    return text
+
+
+def main():
+    ''' Let's get it on... '''
+    incolor     = opts.incolor  # cache
+    longestpth  = colwidth + 1  # extra space
+    widelayout  = opts.columns > 89
+    numcols     = 6
+    if not widelayout:          # might as well, we have space
+        opts.showlbs = True
+    if not opts.showlbs:
+        numcols = 5
+
+    if opts.binary:
+        outunit, unitstr = set_outunit('-%sb' % opts.unit.lower())
+    else:
+        outunit, unitstr = set_outunit('-%s' % opts.unit.lower())
+    if opts.debug:
+        print 'opts:', opts    # or will get clobbered by set
+        print 'unitstr:', unitstr
+
+    # Level One Diagnostic
+    print ( '\nFree Resources in Blocks of 1 %s (%s bytes)' %
+           (unitstr, fmtval(outunit, override_prec=0, spacing=False,
+                            trunc=False)) ),
+
+    meminfo = pform.get_meminfo(outunit, debug=opts.debug)
+    if not meminfo:
+        print '\nError: Couldn\'t read memory information.'
+        sys.exit(errno.EIO)
+
+    diskinfo = pform.get_diskinfo(outunit, show_all=opts.all, debug=opts.debug,
+                                  local_only=opts.local)
+    if not diskinfo:
+        print '\nError: Couldn\'t read disk information.'
+        sys.exit(errno.EIO)
+
+    print # after possible diskinfo ukisks warning
+    # figure out graph width
+    for disk in diskinfo:
+        pathlen = len(disk.mntp)
+        if pathlen > longestpth:
+            longestpth = pathlen
+
+    # cap longest path
+    dwidth = colwidth * 2
+    longestpth = longestpth if longestpth < dwidth else dwidth
+
+    if not opts.width:  # automatic width
+        #         rm path col,   add space each, return path col, graph padding
+        taken = ((numcols - 1) * (colwidth + 1)) + longestpth + 4
+        if widelayout:  opts.width = opts.columns - taken
+        else:           opts.width = 58
+
+    print  # Headers
+    print fmtstr('DEVICE', leftjust=True),
+    if opts.showlbs:
+        print fmtstr('VOLUME', leftjust=True),
+    for header in ['CAPACITY', 'USED', 'FREE']:
+        print fmtstr(header),
+
+    if widelayout:
+        if ' ' in pform.col_lblw:   # figure expanding label (on posix)
+            lbl = list(pform.col_lblw)
+            while len(lbl) < colwidth:
+                lbl.insert(5, ' ')
+            lbl = ''.join(lbl)
+            extspace = 2
+        else:
+            lbl = pform.col_lblw    # win
+            extspace = 3
+        print ' ' * (opts.width + extspace), fmtstr(lbl),
+    else:
+        print ' ',
+        print fmtstr(pform.col_lbls),
+    print
+    print_meminfo(meminfo, widelayout, incolor)
+    print_diskinfo(diskinfo, widelayout, incolor)
+
+
+if __name__ == '__main__':
+    opts, colwidth = setup()
+    sys.exit(main())
