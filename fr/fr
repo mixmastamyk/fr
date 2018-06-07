@@ -8,6 +8,7 @@
 '''
 from __future__ import print_function
 
+
 if True:  # foldable init
     import sys, os
     import errno, locale, math
@@ -17,7 +18,6 @@ if True:  # foldable init
         ansi, fmtstr, fmtval, set_outunit, truncstr, print_meminfo,
         print_diskinfo
     )
-
 
     __version__     = '3.00.a100'
     out             = sys.stdout.write
@@ -58,42 +58,43 @@ def out(*args):
 
 def setup():
     'Parse, interpret command line options, discover environment.'
-    parser = OptionParser(usage=__doc__.rstrip(), version=__version__)
-    parser.add_option('-a', '--all', action='store_true',
-                      help='Include unmounted devices and tmpfs mounts.')
-    parser.add_option('-b', '--binary',
-                      action='store_true', dest='binary', default=_binary,
-                      help='Use propeller-head binary units (2^10) instead of '
-                      'human/SI units (10^3).')
-    parser.add_option('-d', '--debug',
-                      action='store_true', dest='debug', default=_debug,
-                      help='Turns on verbose debugging output.')
-    parser.add_option('-l', '--local', action='store_true',
-                      help='Include only local filesystems.')
-    parser.add_option('-p', '--precision', type='int', default=_precision,
-                      metavar='#', help='Set the number of dec. places shown.')
-    parser.add_option('-r', '--relative', action='store_true',
-                      help='Use logarithmic relative disk graph sizes.')
+    from argparse import ArgumentParser
+    parser = ArgumentParser(usage=__doc__.rstrip())
+    parser.add_argument('-a', '--all', action='store_true',
+                        help='Include unmounted devices and tmpfs mounts.')
+    parser.add_argument('-b', '--binary',
+                        action='store_true', dest='binary', default=_binary,
+                        help='Use propeller-head binary units (2^10) instead of '
+                        'human/SI units (10^3).')
+    parser.add_argument('-d', '--debug',
+                        action='store_true', dest='debug', default=_debug,
+                        help='Turns on verbose debugging output.')
+    parser.add_argument('-l', '--local', action='store_true',
+                        help='Include only local filesystems.')
+    parser.add_argument('-p', '--precision', type=int, default=_precision,
+                        metavar='#', help='Set the number of dec. places shown.')
+    parser.add_argument('-r', '--relative', action='store_true',
+                        help='Use logarithmic relative disk graph sizes.')
 
     unit_choices = ('b', 'k', 'm', 'g', 't')
-    parser.add_option('-u', '--unit', default='m', choices=unit_choices,
-                      metavar='U', help='Selects the unit size: b, k, m, g, t')
-    parser.add_option('-w', '--width', type='int', metavar='#',
-                      default=_graphwidth,
-                      help='Set the width of the resource graphs.')
+    parser.add_argument('-u', '--unit', default='m', choices=unit_choices,
+                        metavar='U', help='Selects the unit size: b, k, m, g, t')
+    parser.add_argument('-w', '--width', type=int, metavar='#',
+                        default=_graphwidth,
+                        help='Set the width of the resource graphs.')
 
     toggle_choices = ('auto', 'on', 'off')
-    parser.add_option('--color', dest='incolor', type='choice',
-                      default=_incolor, choices=toggle_choices, metavar='...',
-                      help='Color: (%s)' % ', '.join(toggle_choices))
-    parser.add_option('--labels', type='choice', default=_showlbs,
-                      choices=toggle_choices, metavar='...', dest='showlbs',
-                      help='Show volume label column: (%s)' %
-                      ', '.join(toggle_choices))
-    opts, args = parser.parse_args()
+    parser.add_argument('--color', dest='incolor',
+                        default=_incolor, choices=toggle_choices, metavar='...',
+                        help='Color: (%s)' % ', '.join(toggle_choices))
+    parser.add_argument('--labels', default=_showlbs,
+                        choices=toggle_choices, metavar='...', dest='showlbs',
+                        help='Show volume label column: (%s)' %
+                        ', '.join(toggle_choices))
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + __version__)
 
-    if args:
-        parser.error('No solo arguments allowed.')
+    opts = parser.parse_args()
 
     # check environment
     isatty = hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno())
