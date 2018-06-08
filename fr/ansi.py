@@ -2,7 +2,6 @@
     ansilib, a library of common console color functions.
     (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
 '''
-from __future__ import print_function
 import sys, os
 out             = sys.stdout.write
 

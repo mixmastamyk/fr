@@ -1,6 +1,8 @@
 import sys
 import locale
-out             = sys.stdout.write
+
+
+out = sys.stdout.write
 
 # "icons"
 _ramico         = '⌁'
@@ -57,11 +59,6 @@ def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
         return result
 
 
-def out(*args):
-    'temporary output until move to 3.x'
-    print(*args, end='')
-
-
 def print_meminfo(meminfo, widelayout, incolor):
     ''' Memory information output function. '''
     # prep Mem numbers
@@ -109,7 +106,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         out(fmtstr(_ramico + ' RAM', leftjust=True))
         if opts.showlbs:
             out(fmtstr(' '))
-        out(fmtval(totl), fmtval(used, rlblcolor))
+        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)}')
         out(fmtval(free, rlblcolor))
 
         # print graph
@@ -118,8 +115,8 @@ def print_meminfo(meminfo, widelayout, incolor):
                      cbrackets=_brckico)
         print(' ', fmtval(cach, swap_color))
     else:
-        out(fmtstr(_ramico + ' RAM', leftjust=True), fmtstr(' '))
-        out(fmtval(totl), fmtval(used, rlblcolor), fmtval(free, rlblcolor))
+        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr(" ")}')
+        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
         print(' ', fmtval(cach, swap_color))
 
         # print graph
@@ -140,7 +137,7 @@ def print_meminfo(meminfo, widelayout, incolor):
             out(fmtstr(' '))
         if swpt:
             out(fmtval(swpt))
-            out(fmtval(swpu, slblcolor), fmtval(swpf, slblcolor))
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
         else:
             print(fmtstr(_emptico, ansi.fdimbb))
 
@@ -150,15 +147,15 @@ def print_meminfo(meminfo, widelayout, incolor):
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             if swpc:
-                out(' ', fmtval(swpc, swap_color))
+                out('  ' + fmtval(swpc, swap_color))
             print()
     else:
         out(fmtstr(_diskico + ' SWAP', leftjust=True))
         if swpt:
-            out(fmtstr(' '), fmtval(swpt))
-            out(fmtval(swpu, slblcolor), fmtval(swpf, slblcolor))
+            out(f'{fmtstr(" ")} {fmtval(swpt)}')
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
             if swpc:
-                out(' ', fmtval(swpc, swap_color))
+                out('  ' + fmtval(swpc, swap_color))
             print()
 
             # print graph
@@ -210,18 +207,18 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
         )
         if widelayout:
-            out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
+            out(fmtstr(ico + " " + disk.dev, leftjust=True))
             if opts.showlbs:
                 out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
                 if disk.rw:
-                    out(fmtval(disk.cap), fmtval(disk.used, lblcolor))
+                    out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
                     out(fmtval(disk.free, lblcolor))
                 else:
-                    out(fmtval(disk.cap), fmtstr(''))
+                    out(f'{fmtval(disk.cap)} {fmtstr("")}')
                     out(fmtstr(_emptico, ansi.fdimbb))
             else:
-                out(fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''))
+                out(f'fmtstr(_emptico, ansi.fdimbb) fmtstr("") fmtstr("")')
 
             if disk.cap:
                 out(' ')
@@ -233,17 +230,17 @@ def print_diskinfo(diskinfo, widelayout, incolor):
 
                 if opts.relative and opts.width != gwidth:
                     out(' ' * (opts.width - gwidth - 1))
-                out(' ', fmtstr(disk.mntp, leftjust=True, trunc='left'))
+                out(f'  {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
             print()
         else:
             out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
             if opts.showlbs:
                 out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
-                out(fmtval(disk.cap), fmtval(disk.used, lblcolor))
+                out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
                 out(fmtval(disk.free, lblcolor))
             else:
-                out(fmtstr(_emptico, ansi.fdimbb), fmtstr(''), fmtstr(''))
+                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr("")} {fmtstr("")}')
             print(' ', fmtstr(disk.mntp, leftjust=True, trunc=False))
 
             if disk.cap:

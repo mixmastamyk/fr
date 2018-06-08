@@ -1,59 +1,56 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 '''
     %prog - Free Resource Printer - (C) 2005-2018, Mike Miller
     A program to print available free resources in delicious flavors.
     License: GPLv3+.
 
     usage: %prog [options]
+
+    TODO:
+
+        - move icon load to init
+        - check for py 3.6, give warning
+        - make default for fmtstr("")
+        - Vol under ssh client?
+
 '''
-from __future__ import print_function
+import sys, os
+import errno, locale, math
+import shutil
+from optparse import OptionParser
+from fr import (ansi, fmtstr, fmtval, set_outunit, truncstr, print_meminfo,
+                print_diskinfo)
 
+__version__     = '3.00.a100'
+out             = sys.stdout.write
 
-if True:  # foldable init
-    import sys, os
-    import errno, locale, math
-    import shutil
-    from optparse import OptionParser
-    from fr import (
-        ansi, fmtstr, fmtval, set_outunit, truncstr, print_meminfo,
-        print_diskinfo
-    )
+# Set defaults
+_debug          = False
+_binary         = False
+_incolor        = 'auto'
+_showlbs        = 'auto'
+_outunit        = 1000000, 'Megabyte'  # 1 Megabyte default
+_graphwidth     = 0
+_precision      = -1
+_colwidth       = 10
+_extra_cols_at  = 110
+_extra_cols_cap = 4
 
-    __version__     = '3.00.a100'
-    out             = sys.stdout.write
-    # Set defaults
-    _debug          = False
-    _binary         = False
-    _incolor        = 'auto'
-    _showlbs        = 'auto'
-    _outunit        = 1000000, 'Megabyte'  # 1 Megabyte default
-    _graphwidth     = 0
-    _precision      = -1
-    _colwidth       = 10
-    _extra_cols_at  = 110
-    _extra_cols_cap = 4
+# discover environment, must be done before colorama to avoid crash on win
+totcols, _ = shutil.get_terminal_size((80, 20))  # fallback
 
-    # discover environment, must be done before colorama to avoid crash on win
-    #~ totcols, _ = ansi.get_term_size()
-    totcols, _ = shutil.get_terminal_size((80, 20))  # fallback
+plat = sys.platform[:3]
+if plat == 'lin':
+    import fr.linux as pform
+elif plat == 'win':
+    import fr.windows as pform
+elif plat == 'dar':
+    import fr.darwin as pform
 
-    plat = sys.platform[:3]
-    if plat == 'lin':
-        import fr.linux as pform
-    elif plat == 'win':
-        import fr.windows as pform
-    elif plat == 'dar':
-        import fr.darwin as pform
-
-    # load icons from module  - TODO move to __init__
-    for pvar in dir(pform):
-        if pvar.startswith('_') and pvar.endswith('ico'):
-            globals()[pvar] = getattr(pform, pvar)
-
-
-def out(*args):
-    'temporary output until move to 3.x'
-    print(*args, end='')
+# load icons from module  - TODO move to __init__
+for pvar in dir(pform):
+    if pvar.startswith('_') and pvar.endswith('ico'):
+        globals()[pvar] = getattr(pform, pvar)
 
 
 def setup():
@@ -124,7 +121,7 @@ def setup():
     else:
         opts.incolor = False
 
-    # determine whether to show volume column
+    # determine whether to show volume column, no under SSH?
     if opts.showlbs == 'auto':
         if 'SSH_CLIENT' in os.environ:
             opts.showlbs = False
@@ -140,7 +137,7 @@ def setup():
     colwidth = _colwidth
     extrawidth = opts.columns - _extra_cols_at
     if extrawidth > 0:
-        colwidth += min(extrawidth / 10, _extra_cols_cap) # cap at
+        colwidth += min(extrawidth // 10, _extra_cols_cap)  # cap at
 
     return opts, colwidth
 
@@ -165,19 +162,21 @@ def main():
         print('unitstr:', unitstr)
 
     # Level One Diagnostic
-    out(( '\nFree Resources in Blocks of 1 %s (%s bytes)' %
-           (unitstr, fmtval(outunit, override_prec=0, spacing=False,
-                            trunc=False)) ))
+    outunit_fmt = fmtval(outunit, override_prec=0, spacing=False, trunc=False)
+    out(f'\nFree Resources in Blocks of 1 {unitstr} ({outunit_fmt} bytes)')
 
     meminfo = pform.get_meminfo(outunit, debug=opts.debug)
     if not meminfo:
-        print('\nError: Couldn\'t read memory information.')
+        print('\nError: Could not read memory information.')
         sys.exit(errno.EIO)
 
-    diskinfo = pform.get_diskinfo(outunit, show_all=opts.all, debug=opts.debug,
-                                  local_only=opts.local)
+    diskinfo = pform.get_diskinfo(outunit,
+                                  debug=opts.debug,
+                                  local_only=opts.local,
+                                  show_all=opts.all,
+                                  )
     if not diskinfo:
-        print('\nError: Couldn\'t read disk information.')
+        print('\nError: Could not read disk information.')
         sys.exit(errno.EIO)
 
     print() # after possible diskinfo/dbus/udisks warning
@@ -194,10 +193,13 @@ def main():
     if not opts.width:  # automatic width
         #         rm path col,   add space each, return path col, graph padding
         taken = ((numcols - 1) * (colwidth + 1)) + longestpth + 4
-        if widelayout:  opts.width = opts.columns - taken
-        else:           opts.width = 58
+        if widelayout:
+            opts.width = opts.columns - taken
+        else:
+            opts.width = 58
 
-    print() # Headers
+    # Headers
+    print()
     out(fmtstr('DEVICE', leftjust=True))
     if opts.showlbs:
         out(fmtstr('VOLUME', leftjust=True))
@@ -214,10 +216,9 @@ def main():
         else:
             lbl = pform.col_lblw    # win
             extspace = 3
-        out(' ' * (opts.width + extspace), fmtstr(lbl))
+        out(f'{" " * (opts.width + extspace)} {fmtstr(lbl)}')
     else:
-        print(' ',)
-        out(fmtstr(pform.col_lbls))
+        out('  ' + fmtstr(pform.col_lbls))
     print()
     print_meminfo(meminfo, widelayout, incolor)
     print_diskinfo(diskinfo, widelayout, incolor)
@@ -226,7 +227,7 @@ def main():
 if __name__ == '__main__':
     opts, colwidth = setup()
 
-    import fr  # make avail in other module  :-/
+    import fr  # make constants avail in other module  :-/
     fr.opts = opts
     fr.colwidth = colwidth
     fr.plat = plat
