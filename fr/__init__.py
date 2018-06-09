@@ -4,7 +4,7 @@ import locale
 
 out = sys.stdout.write
 
-# "icons"
+# default icons
 _ramico         = '⌁'
 _diskico        = '▪'
 _unmnico        = '▫'
@@ -18,6 +18,13 @@ _cmonico        = '▒'           # cache mono
 _freeico        = '░'
 _warnico        = '⚠'
 _brckico        = ('▕', '▏')    # start, end "brackets"
+
+
+def load_icons():
+    ''' load icons from module '''
+    for pvar in dir(pform):
+        if pvar.startswith('_') and pvar.endswith('ico'):
+            globals()[pvar] = getattr(pform, pvar)
 
 
 def fmtstr(text, colorstr=None, leftjust=False, trunc=True):

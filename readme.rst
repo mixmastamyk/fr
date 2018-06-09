@@ -36,7 +36,13 @@ CentOS 6, Windows (XP, 7),
 and Mac OS X (10.9.x) so far.
 It runs only under Python 2.X at this time.
 
-|
+.. note::
+
+    This version works under Python 3.6+ only.
+    To use with an earlier Python, try fr 1.X,
+    supporting back to Python 2.7.
+
+
 
 Install
 ------------

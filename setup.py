@@ -41,6 +41,7 @@ setup(
         'win': ['winstats'],
         'color': ['colorama'],
     },
+    python_requires='>3.6.0',
 
     long_description = long_description,
     classifiers     = [

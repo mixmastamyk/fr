@@ -8,10 +8,10 @@
 
     TODO:
 
-        - move icon load to init
-        - check for py 3.6, give warning
         - make default for fmtstr("")
         - Vol under ssh client?
+        - errno to os.EX
+        - port ansi to newer module
 
 '''
 import sys, os
@@ -46,11 +46,6 @@ elif plat == 'win':
     import fr.windows as pform
 elif plat == 'dar':
     import fr.darwin as pform
-
-# load icons from module  - TODO move to __init__
-for pvar in dir(pform):
-    if pvar.startswith('_') and pvar.endswith('ico'):
-        globals()[pvar] = getattr(pform, pvar)
 
 
 def setup():
@@ -232,5 +227,6 @@ if __name__ == '__main__':
     fr.colwidth = colwidth
     fr.plat = plat
     fr.pform = pform
+    fr.load_icons()
 
     sys.exit(main())

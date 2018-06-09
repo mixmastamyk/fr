@@ -95,15 +95,15 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
                 if show_all:
                     if device == 'tmpfs':
                         disk.isram = True
-                else:
+                else:  # skip
                     if (dev.startswith('loop') or
                         dev.startswith('tmpfs') or
                         mntp == '/boot/efi'  ):
                         continue
 
-                break   # found a useful entry
+                break   # found a useful entry, stop here
         else:           # not found
-            continue    # dump junk
+            continue    # dump it
 
         disk.dev = dev
         # https://stackoverflow.com/a/13576641/450917
