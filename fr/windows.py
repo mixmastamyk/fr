@@ -3,14 +3,17 @@
     License: GPLv3+.
 '''
 from __future__ import print_function
-import sys, os, locale, stat, platform
+import os
+import locale
+import platform
+import stat
 try:
     from winstats import ( _diskusage, get_drives, get_drive_type, get_fs_usage,
                            get_perf_data, get_perf_info, get_mem_info,
                            get_vol_info )
 except ImportError:
-    sys.exit('Error: winstats module not found.  C:\> pip install winstats')
-
+    #~ sys.exit('Error: winstats module not found.  C:\> pip install winstats')
+    pass
 try:
     import colorama
     colorama.init()
@@ -19,6 +22,13 @@ except ImportError:
     coloravail = False
 
 from fr.utils import Info
+
+try:
+    os.EX_OK
+except AttributeError:
+    print('Setting exit codes: OS OK')
+    os.EX_OK = 0
+    os.EX_IOERROR = 74  # ?
 
 
 version = platform.win32_ver()[1]
@@ -56,6 +66,14 @@ _drive_type_result = {
     5: ('isopt', True),     # CDROM
     6: ('isram', True),     # RAMDISK
 }
+
+
+class ColorNotAvail(Exception):
+    ''' Error: color support not available.  Install colorama:
+        pip3 install colorama
+    '''
+    def __str__(self):
+        return f'{self.__class__.__name__}: {self.__doc__}'
 
 
 def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):

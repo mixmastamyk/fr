@@ -2,7 +2,7 @@
     ansilib, a library of common console color functions.
     (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
 '''
-import sys, os
+import sys
 out             = sys.stdout.write
 
 if True:  # fold init

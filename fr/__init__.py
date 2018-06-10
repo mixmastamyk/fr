@@ -1,29 +1,37 @@
 import sys
 import locale
 
+from . import ansi
 
+
+_outunit = 1000000, 'Megabyte'  # 1 Megabyte default
+opts, pform = None, None
 out = sys.stdout.write
 
 # default icons
 _ramico  = '⌁'
 _diskico = '▪'
-#~ _imgico  = '⦾'
-_imgico  = '🗎'
-_unmnico = '▫'
-_remvico = '⇄'
-_netwico = '⇅'
-_discico = '◗'
-_emptico = '∅'           # empty set
-_ellpico = '…'           # ellipsis
-_usedico = '▉'
 _cmonico = '▒'           # cache mono
+_discico = '◗'
+_ellpico = '…'           # ellipsis
+_emptico = '∅'           # empty set
 _freeico = '░'
+_gearico = '⚙'
+_imgico  = '🗎'  # '⦾'
+_netwico = '⇅'
+_remvico = '⇄'
+_unmnico = '▫'
+_usedico = '▉'
 _warnico = '⚠'
 _brckico = ('▕', '▏')    # start, end "brackets"
 
 
-def load_icons():
-    ''' load icons from module '''
+def load_config(options):
+    ''' Load vars and icons. '''
+    global opts, pform
+    opts = options
+    pform = options.pform
+
     for pvar in dir(pform):
         if pvar.startswith('_') and pvar.endswith('ico'):
             globals()[pvar] = getattr(pform, pvar)
@@ -33,10 +41,12 @@ def fmtstr(text='', colorstr=None, leftjust=False, trunc=True):
     ''' Formats, justifies, and returns a given string according to
         specifications.
     '''
+    colwidth = opts.colwidth
     if leftjust:  width = -colwidth
     else:         width =  colwidth
     if trunc:
-        cwd = (colwidth * 2) if trunc == 'left' and plat != 'win' else colwidth
+        #~ cwd = (colwidth * 2) if trunc == 'left' and plat != 'win' else colwidth
+        cwd = (colwidth * 2) if trunc == 'left' else colwidth
         if len(text) > cwd:
             text = truncstr(text, cwd, align=trunc)  # truncate w/ellipsis
     value = '%%%ss' % width %  text
@@ -48,6 +58,7 @@ def fmtstr(text='', colorstr=None, leftjust=False, trunc=True):
 
 def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
     ''' Formats and returns a given number according to specifications. '''
+    colwidth = opts.colwidth
     # get precision
     if override_prec is None:
         override_prec = opts.precision
@@ -70,116 +81,56 @@ def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
         return result
 
 
-def print_meminfo(meminfo, widelayout, incolor):
-    ''' Memory information output function. '''
-    # prep Mem numbers
-    totl = meminfo.MemTotal
-    cach = meminfo.Cached + meminfo.Buffers
-    free = meminfo.MemFree
-    used = meminfo.Used
-    if opts.debug:
-        print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
+def get_units(unit, binary=False):
+    ''' Sets the output unit and precision for future calculations and returns
+        an integer and the string representation of it.
+    '''
+    result = None
 
-    usep = float(used) / totl * 100           # % used of total ram
-    cacp = float(cach) / totl * 100           # % cache
-    frep = float(free) / totl * 100           # % free
-    rlblcolor = ansi.get_label_tmpl(usep, opts.width, opts.hicolor)
+    if unit == 'b':
+        result = 1, 'Byte'
 
-    # Prepare Swap numbers
-    swpt = meminfo.SwapTotal
-    if swpt:
-        swpf = meminfo.SwapFree
-        swpc = meminfo.SwapCached
-        swpu = meminfo.SwapUsed
-        swfp = float(swpf) / swpt * 100       # % free of total sw
-        swcp = float(swpc) / swpt * 100       # % cache
-        swup = float(swpu) / swpt * 100       # % used
-        slblcolor = ansi.get_label_tmpl(swup, opts.width, opts.hicolor)
-    else:
-        swpf = swpc = swpu = swfp = swcp = swup = 0 # avoid /0 error
-        slblcolor = None
-    if opts.hicolor:
-        swap_color = ansi.csi8_blk % ansi.blu8
-    else:
-        swap_color = ansi.fbblue
-    cacheico = _usedico if incolor else _cmonico
+    elif binary:  # 2^X
+        if   unit == 'k':
+            result = 1024, 'Kibibyte'
+        elif unit == 'm':
+            result = 1048576, 'Mebibyte'
+        elif unit == 'g':
+            if opts.precision == -1:
+                opts.precision = 3
+            result = 1073741824, 'Gibibyte'
+        elif unit == 't':
+            if opts.precision == -1:
+                opts.precision = 3
+            result = 1099511627776, 'Tebibyte'
 
-    # print RAM info
-    data = (
-        (_usedico, usep, None,  None, pform.boldbar),       # used
-        (cacheico, cacp, ansi.blue,  None, pform.boldbar),  # cache
-        (_freeico, frep, None,  None, False),               # free
-    )
-    if widelayout:
-        out(fmtstr(_ramico + ' RAM', leftjust=True))
-        if opts.showlbs:
-            out(fmtstr(' '))
-        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)}')
-        out(fmtval(free, rlblcolor))
+    else:  #  10^x
+        if   unit == 'k':
+            result = 1000, 'Kilobyte'
+        elif unit == 'm':
+            result = 1000000, 'Megabyte'
+        elif unit == 'g':
+            if opts.precision == -1:
+                opts.precision = 3      # new defaults
+            result = 1000000000, 'Gigabyte'
+        elif unit == 't':
+            if opts.precision == -1:
+                opts.precision = 3
+            result = 1000000000000, 'Terabyte'
 
-        # print graph
-        out(' ')  # two extra spaces right
-        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
-                     cbrackets=_brckico)
-        print(' ', fmtval(cach, swap_color))
-    else:
-        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()}')
-        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
-        print(' ', fmtval(cach, swap_color))
+    if not result:
+        print('Warning: incorrect parameter: %s.' % unit)
+        result = _outunit
 
-        # print graph
-        out(fmtstr(' ')) # one space
-        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
-                     cbrackets=_brckico)
-        print('\n') # extra line in narrow layout
-
-    # Swap time:
-    data = (
-        (_usedico, swup, None,  None, pform.boldbar),    # used
-        (_usedico, swcp, None,  None, pform.boldbar),    # cache
-        (_freeico, swfp, None,  None, False),    # free
-    )
-    if widelayout:
-        out(fmtstr(_diskico + ' SWAP', leftjust=True))
-        if opts.showlbs:
-            out(fmtstr(' '))
-        if swpt:
-            out(fmtval(swpt))
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
-        else:
-            print(fmtstr(_emptico, ansi.fdimbb))
-
-        # print graph
-        if swpt:
-            out(' ')  # two extra spaces right
-            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
-                         cbrackets=_brckico)
-            if swpc:
-                out('  ' + fmtval(swpc, swap_color))
-            print()
-    else:
-        out(fmtstr(_diskico + ' SWAP', leftjust=True))
-        if swpt:
-            out(f'{fmtstr(" ")} {fmtval(swpt)}')
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
-            if swpc:
-                out('  ' + fmtval(swpc, swap_color))
-            print()
-
-            # print graph
-            out(fmtstr(' '))  # one space
-            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
-                         cbrackets=_brckico)
-            print()
-        else:
-            print(fmtstr(_emptico, ansi.fdimbb))
-        print()
-    print() # extra newline that separates mem and disk sections
+    if opts.precision == -1:  # auto
+        opts.precision = 0
+    return result
 
 
 def print_diskinfo(diskinfo, widelayout, incolor):
     'Disk information output function.'
     if opts.relative:
+        import math
         base = max([ disk.ocap  for disk in diskinfo ])
 
     for disk in diskinfo:
@@ -190,6 +141,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.isnet:      ico = _netwico
         if disk.isram:      ico = _ramico
         if disk.isimg:      ico = _imgico
+        if disk.mntp == '/boot/efi':  # TODO mv this icon setting to pform
+                            ico = _gearico
 
         if opts.relative and disk.ocap and disk.ocap != base:
             # increase log size reduction by raising to 4th power:
@@ -215,8 +168,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         )
         if widelayout:
             out(fmtstr(ico + " " + disk.dev, leftjust=True))
-            if opts.showlbs:
-                out(fmtstr(disk.label, leftjust=True))
+            out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
                 if disk.rw:
                     out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
@@ -264,47 +216,112 @@ def print_diskinfo(diskinfo, widelayout, incolor):
     print()
 
 
-def set_outunit(unit):
-    ''' Sets the output unit and precision for future calculations and returns
-        the string representation of it.
-    '''
-    if   unit == '-b' or unit == '-bb':
-        result = 1, 'Byte'
-    elif unit == '-k':
-        result = 1000, 'Kilobyte'  # "real" kb
-    elif unit == '-kb':
-        result = 1024, 'Kibibyte'  # binary kb
-    elif unit == '-m':
-        result = 1000000, 'Megabyte'
-    elif unit == '-mb':
-        result = 1048576, 'Mebibyte'
-    elif unit == '-g':
-        if opts.precision == -1:
-            opts.precision = 3  # new defaults
-        result = 1000000000, 'Gigabyte'
+def print_meminfo(meminfo, widelayout, incolor):
+    ''' Memory information output function. '''
+    # prep Mem numbers
+    totl = meminfo.MemTotal
+    cach = meminfo.Cached + meminfo.Buffers
+    free = meminfo.MemFree
+    used = meminfo.Used
+    if opts.debug:
+        print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
 
-    elif unit == '-gb':                 # binary gigabytes
-        if opts.precision == -1:
-            opts.precision = 3
-        result = 1073741824, 'Gibibyte'
+    usep = float(used) / totl * 100           # % used of total ram
+    cacp = float(cach) / totl * 100           # % cache
+    frep = float(free) / totl * 100           # % free
+    rlblcolor = ansi.get_label_tmpl(usep, opts.width, opts.hicolor)
 
-    elif unit == '-t':
-        if opts.precision == -1:
-            opts.precision = 3
-        result = 1000000000000, 'Terabyte'
+    # Prepare Swap numbers
+    swpt = meminfo.SwapTotal
+    if swpt:
+        swpf = meminfo.SwapFree
+        swpc = meminfo.SwapCached
+        swpu = meminfo.SwapUsed
+        swfp = float(swpf) / swpt * 100       # % free of total sw
+        swcp = float(swpc) / swpt * 100       # % cache
+        swup = float(swpu) / swpt * 100       # % used
+        slblcolor = ansi.get_label_tmpl(swup, opts.width, opts.hicolor)
+    else:
+        swpf = swpc = swpu = swfp = swcp = swup = 0 # avoid /0 error
+        slblcolor = None
+    if opts.hicolor:
+        swap_color = ansi.csi8_blk % ansi.blu8
+    else:
+        swap_color = ansi.fbblue
+    cacheico = _usedico if incolor else _cmonico
 
-    elif unit == '-tb':
-        if opts.precision == -1:
-            opts.precision = 3
-        result = 1099511627776, 'Tebibyte'
+    # print RAM info
+    data = (
+        (_usedico, usep, None,  None, pform.boldbar),       # used
+        (cacheico, cacp, ansi.blue,  None, pform.boldbar),  # cache
+        (_freeico, frep, None,  None, False),               # free
+    )
+    if widelayout:
+        out(fmtstr(_ramico + ' RAM', leftjust=True))
+        #~ if opts.showlbs:
+        out(fmtstr(' '))
+        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)}')
+        out(fmtval(free, rlblcolor))
 
-    else:    # Default
-        print('Warning: incorrect parameter: %s.' % unit)
-        result = _outunit
+        # print graph
+        out(' ')  # two extra spaces right
+        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                     cbrackets=_brckico)
+        print(' ', fmtval(cach, swap_color))
+    else:
+        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()}')
+        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
+        print(' ', fmtval(cach, swap_color))
 
-    if opts.precision == -1:
-        opts.precision = 0
-    return result
+        # print graph
+        out(fmtstr(' ')) # one space
+        ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                     cbrackets=_brckico)
+        print('\n') # extra line in narrow layout
+
+    # Swap time:
+    data = (
+        (_usedico, swup, None,  None, pform.boldbar),    # used
+        (_usedico, swcp, None,  None, pform.boldbar),    # cache
+        (_freeico, swfp, None,  None, False),    # free
+    )
+    if widelayout:
+        out(fmtstr(_diskico + ' SWAP', leftjust=True))
+        #~ if opts.showlbs:
+        out(fmtstr(' '))
+        if swpt:
+            out(fmtval(swpt))
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
+        else:
+            print(fmtstr(_emptico, ansi.fdimbb))
+
+        # print graph
+        if swpt:
+            out(' ')  # two extra spaces right
+            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                         cbrackets=_brckico)
+            if swpc:
+                out('  ' + fmtval(swpc, swap_color))
+            print()
+    else:
+        out(fmtstr(_diskico + ' SWAP', leftjust=True))
+        if swpt:
+            out(f'{fmtstr(" ")} {fmtval(swpt)}')
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
+            if swpc:
+                out('  ' + fmtval(swpc, swap_color))
+            print()
+
+            # print graph
+            out(fmtstr(' '))  # one space
+            ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
+                         cbrackets=_brckico)
+            print()
+        else:
+            print(fmtstr(_emptico, ansi.fdimbb))
+        print()
+    print() # extra newline that separates mem and disk sections
+
 
 
 def truncstr(text, width, align='right'):
@@ -312,14 +329,18 @@ def truncstr(text, width, align='right'):
     before = after = ''
     if align == 'left':
         truncated = text[-width+1:]
-        before = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+        # TODO move encoding
+        #~ before = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+        before = _ellpico
     elif align:
         truncated = text[:width-1]
-        after = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+        # to pform module
+        #~ after = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
+        after = _ellpico
 
     text = (before + truncated + after)
-    if plat == 'win':
-        text = text.encode(pform.encoding)  # :(
+    #~ if plat == 'win':
+        #~ text = text.encode(pform.encoding)  # :(
     return text
 
 

@@ -6,18 +6,18 @@
 
     usage: %prog [options]
 
-    TODO:
+    TODO:  refactoring
 
-        - Vol under ssh client?
-        - errno to os.EX
         - port ansi to newer module
         - put gear on /boot/efi
+        - move icon decoding and uploading to pform module
+        - put icons into data?
 '''
-import sys, os
-import errno, locale, math
-import shutil
-from optparse import OptionParser
-from fr import (ansi, fmtstr, fmtval, set_outunit, truncstr, print_meminfo,
+import os
+import sys
+
+import fr
+from fr import (fmtstr, fmtval, get_units, truncstr, print_meminfo,
                 print_diskinfo)
 
 __version__     = '3.00a0'
@@ -25,73 +25,82 @@ __version__     = '3.00a0'
 # Set defaults
 _debug          = False
 _binary         = False
-_incolor        = 'auto'
-_showlbs        = 'auto'
-_outunit        = 1000000, 'Megabyte'  # 1 Megabyte default
-_graphwidth     = 0
-_precision      = -1
 _colwidth       = 10
 _extra_cols_at  = 110
 _extra_cols_cap = 4
+_graphwidth     = 0
+_incolor        = 'auto'
+_precision      = -1
 out             = sys.stdout.write
-
-# discover environment, must be done before colorama to avoid crash on win
-totcols, _ = shutil.get_terminal_size((80, 20))  # fallback
-
-plat = sys.platform[:3]
-if plat == 'lin':
-    import fr.linux as pform
-elif plat == 'win':
-    import fr.windows as pform
-elif plat == 'dar':
-    import fr.darwin as pform
 
 
 def setup():
     'Parse, interpret command line options, discover environment.'
+    import shutil
     from argparse import ArgumentParser
     parser = ArgumentParser(usage=__doc__.rstrip())
     parser.add_argument('-a', '--all', action='store_true',
                         help='Include unmounted devices and tmpfs mounts.')
     parser.add_argument('-b', '--binary',
                         action='store_true', dest='binary', default=_binary,
-                        help='Use propeller-head binary units (2^10) instead of'
-                        ' human/SI units (10^3).')
+                        help='Use propeller-head binary units (2^10) instead '
+                        'of human/SI units (10^3).')
     parser.add_argument('-d', '--debug',
                         action='store_true', dest='debug', default=_debug,
                         help='Turns on verbose debugging output.')
     parser.add_argument('-l', '--local', action='store_true',
                         help='Include only local filesystems.')
     parser.add_argument('-p', '--precision', type=int, default=_precision,
-                        metavar='#', help='Set the number of dec. places shown.')
+                        metavar='#', help='Set number of dec. places shown.')
     parser.add_argument('-r', '--relative', action='store_true',
                         help='Use logarithmic relative disk graph sizes.')
 
     unit_choices = ('b', 'k', 'm', 'g', 't')
     parser.add_argument('-u', '--unit', default='m', choices=unit_choices,
-                        metavar='U', help='Selects the unit size: b, k, m, g, t')
+                        metavar='U', help='Selects unit size: b, k, m, g, t')
     parser.add_argument('-w', '--width', type=int, metavar='#',
                         default=_graphwidth,
                         help='Set the width of the resource graphs.')
 
     toggle_choices = ('auto', 'on', 'off')
-    parser.add_argument('--color', dest='incolor',
-                        default=_incolor, choices=toggle_choices, metavar='...',
+    parser.add_argument('--color', dest='incolor', metavar='...',
+                        default=_incolor, choices=toggle_choices,
                         help='Color: (%s)' % ', '.join(toggle_choices))
-    parser.add_argument('--labels', default=_showlbs,
-                        choices=toggle_choices, metavar='...', dest='showlbs',
-                        help='Show volume label column: (%s)' %
-                        ', '.join(toggle_choices))
     parser.add_argument('--version', action='version',
                         version='%(prog)s ' + __version__)
 
     opts = parser.parse_args()
 
-    # check environment
+    # discover environment
+    # get_terminal_size(), must be done before colorama to avoid crash on win
+    opts.termcols, _ = shutil.get_terminal_size((80, 20))  # fallback
     isatty = hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno())
     if not isatty:  # must encode for file redirection
         import codecs
         sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+
+    plat = sys.platform[:3]
+    if plat == 'lin':
+        import fr.linux as pform
+    elif plat == 'win':
+        import fr.windows as pform
+    elif plat == 'dar':
+        import fr.darwin as pform
+    opts.pform = pform  # need to straighten this out
+    pform.opts = opts   # need to straighten this out
+
+    # expand colwidth if room, one column extra per ten over threshold
+    opts.colwidth = _colwidth
+    extrawidth = opts.termcols - _extra_cols_at
+    if extrawidth > 0:
+        opts.colwidth += min(extrawidth // 10, _extra_cols_cap)  # cap at
+
+    if opts.debug:
+        print('termcols:', opts.termcols, '_colwidth:', _colwidth)
+        print('_extra_cols_at:', _extra_cols_at)
+        print('extrawidth:', extrawidth)
+        print('opts.colwidth:', opts.colwidth)
+
     # determine whether to use color
     opts.hicolor = None
     if opts.incolor == 'auto':
@@ -109,71 +118,46 @@ def setup():
         if pform.coloravail:
             opts.incolor = True
             opts.hicolor = pform.hicolor
-        elif plat == 'win':
-            print('\nError: color support not available.  Install colorama:')
-            print('       pip install colorama\n')
+        else:
+            raise pform.ColorNotAvail()
     else:
         opts.incolor = False
 
-    # determine whether to show volume column, no under SSH?
-    if opts.showlbs == 'auto':
-        if 'SSH_CLIENT' in os.environ:
-            opts.showlbs = False
-        else:
-            opts.showlbs = True
-    elif opts.showlbs == 'on':
-        opts.showlbs = True
-    else:
-        opts.showlbs = False
-
-    opts.columns = totcols
-    # expand colwidth if room, one column extra per ten over threshold
-    colwidth = _colwidth
-    extrawidth = opts.columns - _extra_cols_at
-    if extrawidth > 0:
-        colwidth += min(extrawidth // 10, _extra_cols_cap)  # cap at
-
-    return opts, colwidth
+    return opts
 
 
-def main():
+def main(opts):
     ''' Let's get it on... '''
     incolor     = opts.incolor  # cache
-    longestpth  = colwidth + 1  # extra space
-    widelayout  = opts.columns > 89
+    longestpth  = opts.colwidth + 1  # extra space
+    widelayout  = opts.termcols > 89
     numcols     = 6
-    if not widelayout:          # might as well, we have space
-        opts.showlbs = True
-    if not opts.showlbs:
-        numcols = 5
 
-    if opts.binary:
-        outunit, unitstr = set_outunit('-%sb' % opts.unit.lower())
-    else:
-        outunit, unitstr = set_outunit('-%s' % opts.unit.lower())
+    fr.load_config(opts)
+    pform = opts.pform
+
+    opts.outunit, unitstr = get_units(opts.unit, binary=opts.binary)
     if opts.debug:
         print('opts:', opts)    # or will get clobbered by set
         print('unitstr:', unitstr)
 
-    # Level One Diagnostic
-    outunit_fmt = fmtval(outunit, override_prec=0, spacing=False, trunc=False)
+    outunit_fmt = fmtval(opts.outunit, override_prec=0, spacing=False, trunc=False)
     out(f'\nFree Resources in Blocks of 1 {unitstr} ({outunit_fmt} bytes)')
 
-    meminfo = pform.get_meminfo(outunit, debug=opts.debug)
+    meminfo = pform.get_meminfo(opts)
     if not meminfo:
-        print('\nError: Could not read memory information.')
-        sys.exit(errno.EIO)
+        print(f'\nError: Could not read memory info @ {pform.memfname}.')
+        sys.exit(os.EX_IOERR)
 
-    diskinfo = pform.get_diskinfo(outunit,
-                                  debug=opts.debug,
+    diskinfo = pform.get_diskinfo(opts,
                                   local_only=opts.local,
                                   show_all=opts.all,
                                   )
     if not diskinfo:
         print('\nError: Could not read disk information.')
-        sys.exit(errno.EIO)
+        sys.exit(os.EX_IOERR)
 
-    print() # after possible diskinfo/dbus/udisks warning
+    print() # after possible diskinfo warning
     # figure out graph width
     for disk in diskinfo:
         pathlen = len(disk.mntp)
@@ -181,29 +165,29 @@ def main():
             longestpth = pathlen
 
     # cap longest path
-    dwidth = colwidth * 2
+    dwidth = opts.colwidth * 2
     longestpth = longestpth if longestpth < dwidth else dwidth
 
     if not opts.width:  # automatic width
         #         rm path col,   add space each, return path col, graph padding
-        taken = ((numcols - 1) * (colwidth + 1)) + longestpth + 4
+        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 4
         if widelayout:
-            opts.width = opts.columns - taken
+            opts.width = opts.termcols - taken
         else:
             opts.width = 58
 
     # Headers
     print()
     out(fmtstr('DEVICE', leftjust=True))
-    if opts.showlbs:
-        out(fmtstr('VOLUME', leftjust=True))
-    for header in ['CAPACITY', 'USED', 'FREE']:
+    out(fmtstr('VOLUME', leftjust=True))
+    out(fmtstr('CAPACITY') + ' ')   # xtra space?
+    for header in ['USED', 'FREE']:
         out(fmtstr(header))
 
     if widelayout:
         if ' ' in pform.col_lblw:   # figure expanding label (on posix)
             lbl = list(pform.col_lblw)
-            while len(lbl) < colwidth:
+            while len(lbl) < opts.colwidth:
                 lbl.insert(5, ' ')
             lbl = ''.join(lbl)
             extspace = 2
@@ -213,19 +197,13 @@ def main():
         out(f'{" " * (opts.width + extspace)} {fmtstr(lbl)}')
     else:
         out('  ' + fmtstr(pform.col_lbls))
+
     print()
     print_meminfo(meminfo, widelayout, incolor)
     print_diskinfo(diskinfo, widelayout, incolor)
 
+    return os.EX_OK
+
 
 if __name__ == '__main__':
-    opts, colwidth = setup()
-
-    import fr  # make constants avail in other module  :-/
-    fr.opts = opts
-    fr.colwidth = colwidth
-    fr.plat = plat
-    fr.pform = pform
-    fr.load_icons()
-
-    sys.exit(main())
+    sys.exit(main(setup()))

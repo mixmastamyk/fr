@@ -1,5 +1,5 @@
 from __future__ import print_function
-import subprocess
+#~ import subprocess
 
 
 class Info(dict):
@@ -12,7 +12,7 @@ class Info(dict):
 
 
 class DiskInfo(Info):
-
+    ''' Grouping of information related to a filesystem. '''
     def __init__(self, **kwargs):
 
         self.dev     = None      # short device name
@@ -39,16 +39,16 @@ class DiskInfo(Info):
 
 
 class MemInfo(Info):
+    ''' System memory information. '''
     pass
 
 
-def run(cmd, shell=True, debug=False):
-    'Run a command and return the output.'
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
-    (out, _) = proc.communicate()  # no need for stderr
-    if debug:
-        print(cmd)
-        print(out)
-    return out
-
+#~ def run(cmd, shell=True, debug=False):
+    #~ 'Run a command and return the output.'
+    #~ proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
+    #~ (out, _) = proc.communicate()  # no need for stderr
+    #~ if debug:
+        #~ print(cmd)
+        #~ print(out)
+    #~ return out
 
