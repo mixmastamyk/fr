@@ -27,8 +27,10 @@ def load_icons():
             globals()[pvar] = getattr(pform, pvar)
 
 
-def fmtstr(text, colorstr=None, leftjust=False, trunc=True):
-    ''' Formats and returns a given string according to specifications. '''
+def fmtstr(text='', colorstr=None, leftjust=False, trunc=True):
+    ''' Formats, justifies, and returns a given string according to
+        specifications.
+    '''
     if leftjust:  width = -colwidth
     else:         width =  colwidth
     if trunc:
@@ -74,10 +76,7 @@ def print_meminfo(meminfo, widelayout, incolor):
     free = meminfo.MemFree
     used = meminfo.Used
     if opts.debug:
-        print('totl:', totl)
-        print('used:', used)
-        print('free:', free)
-        print('cach:', cach)
+        print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
 
     usep = float(used) / totl * 100           # % used of total ram
     cacp = float(cach) / totl * 100           # % cache
@@ -122,7 +121,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                      cbrackets=_brckico)
         print(' ', fmtval(cach, swap_color))
     else:
-        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr(" ")}')
+        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()}')
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
         print(' ', fmtval(cach, swap_color))
 
@@ -187,9 +186,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.isrem:      ico = _remvico
         if disk.isopt:      ico = _discico
         if disk.isnet:      ico = _netwico
-        if disk.isram:
-            ico = _ramico
-            disk.dev = ''
+        if disk.isram:      ico = _ramico
 
         if opts.relative and disk.ocap and disk.ocap != base:
             # increase log size reduction by raising to 4th power:
@@ -222,10 +219,10 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
                     out(fmtval(disk.free, lblcolor))
                 else:
-                    out(f'{fmtval(disk.cap)} {fmtstr("")}')
+                    out(f'{fmtval(disk.cap)} {fmtstr()}')
                     out(fmtstr(_emptico, ansi.fdimbb))
             else:
-                out(f'fmtstr(_emptico, ansi.fdimbb) fmtstr("") fmtstr("")')
+                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
 
             if disk.cap:
                 out(' ')
@@ -238,6 +235,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 if opts.relative and opts.width != gwidth:
                     out(' ' * (opts.width - gwidth - 1))
                 out(f'  {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
+            else:
+                out(f'  {" " * gwidth}{fmtstr(_emptico, ansi.fdimbb, leftjust=1)}')
             print()
         else:
             out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
@@ -247,7 +246,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
                 out(fmtval(disk.free, lblcolor))
             else:
-                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr("")} {fmtstr("")}')
+                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
             print(' ', fmtstr(disk.mntp, leftjust=True, trunc=False))
 
             if disk.cap:
@@ -306,7 +305,7 @@ def set_outunit(unit):
 
 
 def truncstr(text, width, align='right'):
-    ''' Truncate a string, ending in ellipsis if necessary. '''
+    ''' Truncate a string, ending in ellipsis when chopped. '''
     before = after = ''
     if align == 'left':
         truncated = text[-width+1:]
