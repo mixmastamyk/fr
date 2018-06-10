@@ -8,11 +8,10 @@
 
     TODO:
 
-        - make default for fmtstr("")
         - Vol under ssh client?
         - errno to os.EX
         - port ansi to newer module
-
+        - put gear on /boot/efi
 '''
 import sys, os
 import errno, locale, math
@@ -21,8 +20,7 @@ from optparse import OptionParser
 from fr import (ansi, fmtstr, fmtval, set_outunit, truncstr, print_meminfo,
                 print_diskinfo)
 
-__version__     = '3.00.a100'
-out             = sys.stdout.write
+__version__     = '3.00a0'
 
 # Set defaults
 _debug          = False
@@ -35,6 +33,7 @@ _precision      = -1
 _colwidth       = 10
 _extra_cols_at  = 110
 _extra_cols_cap = 4
+out             = sys.stdout.write
 
 # discover environment, must be done before colorama to avoid crash on win
 totcols, _ = shutil.get_terminal_size((80, 20))  # fallback
@@ -56,8 +55,8 @@ def setup():
                         help='Include unmounted devices and tmpfs mounts.')
     parser.add_argument('-b', '--binary',
                         action='store_true', dest='binary', default=_binary,
-                        help='Use propeller-head binary units (2^10) instead of '
-                        'human/SI units (10^3).')
+                        help='Use propeller-head binary units (2^10) instead of'
+                        ' human/SI units (10^3).')
     parser.add_argument('-d', '--debug',
                         action='store_true', dest='debug', default=_debug,
                         help='Turns on verbose debugging output.')

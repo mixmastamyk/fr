@@ -5,19 +5,21 @@ import locale
 out = sys.stdout.write
 
 # default icons
-_ramico         = '⌁'
-_diskico        = '▪'
-_unmnico        = '▫'
-_remvico        = '⇄'
-_netwico        = '⇅'
-_discico        = '◗'
-_emptico        = '∅'           # empty set
-_ellpico        = '…'           # ellipsis
-_usedico        = '▉'
-_cmonico        = '▒'           # cache mono
-_freeico        = '░'
-_warnico        = '⚠'
-_brckico        = ('▕', '▏')    # start, end "brackets"
+_ramico  = '⌁'
+_diskico = '▪'
+#~ _imgico  = '⦾'
+_imgico  = '🗎'
+_unmnico = '▫'
+_remvico = '⇄'
+_netwico = '⇅'
+_discico = '◗'
+_emptico = '∅'           # empty set
+_ellpico = '…'           # ellipsis
+_usedico = '▉'
+_cmonico = '▒'           # cache mono
+_freeico = '░'
+_warnico = '⚠'
+_brckico = ('▕', '▏')    # start, end "brackets"
 
 
 def load_icons():
@@ -187,6 +189,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.isopt:      ico = _discico
         if disk.isnet:      ico = _netwico
         if disk.isram:      ico = _ramico
+        if disk.isimg:      ico = _imgico
 
         if opts.relative and disk.ocap and disk.ocap != base:
             # increase log size reduction by raising to 4th power:
@@ -235,8 +238,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 if opts.relative and opts.width != gwidth:
                     out(' ' * (opts.width - gwidth - 1))
                 out(f'  {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
-            else:
-                out(f'  {" " * gwidth}{fmtstr(_emptico, ansi.fdimbb, leftjust=1)}')
+            #~ else:  # 0 for mountpoint
+                #~ out(f'  {" " * gwidth}{fmtstr(_emptico, ansi.fdimbb, leftjust=1)}')
             print()
         else:
             out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))

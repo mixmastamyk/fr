@@ -5,13 +5,13 @@
 '''
 import sys, os, locale
 from os.path import basename, join, normpath
-from fr.utils import Info, run
+from fr.utils import DiskInfo, MemInfo, run
 
 
 diskdir     = '/dev/disk/by-label'
 memfname    = '/proc/meminfo'
 mntfname    = '/proc/mounts'
-opt_fs      = ('iso9660', 'udf')
+optical_fs  = ('iso9660', 'udf')
 selectors   = ('/', 'tmpfs', ':')
 coloravail  = True
 hicolor     = None
@@ -26,6 +26,7 @@ locale.setlocale(locale.LC_ALL, '')
 if TERM == 'linux':  # basic console, use ascii
     _ramico     = 'r'
     _diskico    = 'd'
+    _imgico     = 'i'
     _unmnico    = 'u'
     _remvico    = 'm'
     _netwico    = 'n'
@@ -43,19 +44,20 @@ elif TERM == 'xterm-256color':
     boldbar     = False
 
 
-def is_optical(disk):
+def check_optical(disk):
     ''' Try to determine if a device is optical technology.
         Needs improvement.
     '''
-    if disk.dev.startswith('sr') or 'cd' in disk.dev:
+    dev = disk.dev
+    if dev.startswith('sr') or 'cd' in dev:
         return True
-    elif disk.fmt in opt_fs:
+    elif disk.fmt in optical_fs:
         return True
     else:
         return None
 
 
-def is_removable(dev):
+def check_removable(dev):
     try: # get parent device from sys filesystem, look from right.  :-/
         parent = os.readlink(f'/sys/class/block/{dev}').rsplit("/", 2)[1]
         with open(f'/sys/block/{parent}/removable') as f:
@@ -74,9 +76,8 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
         Stats are divided by the outputunit.
     '''
     disks = []
-    # get labels from filesystem
     label_map = {}
-    try:
+    try:  # get labels from filesystem
         for entry in os.scandir(diskdir):
             target = normpath(join(diskdir, os.readlink(entry.path)))
             decoded_name = entry.name.encode('utf8').decode('unicode_escape')
@@ -88,41 +89,37 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
 
     # get mount info
     try:
-        with open(mntfname) as f:
-            lines = f.readlines()
+        with open(mntfname) as infile:
+            lines = infile.readlines()
             lines.sort()
     except IOError:
         return None
 
     # build list of disks
     for i, line in enumerate(lines):
-        tokens = line.split()
-        #~ print('line :', tokens)
-        device = tokens[0]
-        mntp = tokens[1]
-        fmt = tokens[2]
-        mntops = tokens[3]
+        device, mntp, fmt, mntops, *_ = line.split()
+
         if device in ('cgroup',):       # never want these
             continue
 
-        disk = Info()
+        disk = DiskInfo()
+        dev = basename(device)          # short name
         disk.isnet  = ':' in device     # cheesy but works
         if local_only and disk.isnet:
             continue
-        dev = basename(device)
-        disk.isram = False
-        disk.fmt = fmt
+        disk.isimg = is_img = dev.startswith('loop') # could be better
+        is_tmpfs = (device == 'tmpfs')
 
         # lots of junk here, so we throw away most entries
         for selector in selectors:
             if selector in device:
                 if show_all:
-                    if device == 'tmpfs':
+                    if is_tmpfs:
                         disk.isram = True
-                else:  # skip
-                    if (dev.startswith('loop') or
-                        dev.startswith('tmpfs') or
-                        mntp == '/boot/efi'  ):
+                else:  # skip these:
+                    if (is_img or
+                        is_tmpfs or
+                        mntp == '/boot/efi'):
                         continue
 
                 break   # found a useful entry, stop here
@@ -130,53 +127,52 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
             continue    # dump it
 
         disk.dev = dev
-        # https://stackoverflow.com/a/13576641/450917
+        disk.fmt = fmt
+        # decode mntp - https://stackoverflow.com/a/13576641/450917
         disk.mntp = mntp = mntp.replace(r'\040', ' ')
         disk.ismntd = bool(mntp)
-
-        # http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/statvfs.h.html
-        stat = os.statvfs(mntp)
-
-        # convert to bytes, then output units
-        disk.ocap  = stat.f_frsize * stat.f_blocks     # keep for later
-        disk.cap   = disk.ocap / outunit
-        disk.free  = stat.f_frsize * stat.f_bavail / outunit
-        disk.oused = stat.f_frsize * (stat.f_blocks - stat.f_bfree)
-        disk.used  = disk.oused / outunit              # keep for later
-        disk.pcnt  = disk.oused / disk.ocap * 100      # TODO: an issue?
-
-        disk.isrem = is_removable(dev)
-        disk.isopt = is_optical(disk)
-
-        if mntops.startswith('rw'): # read only?
+        disk.isopt = check_optical(disk)
+        if device[0] == '/':  # .startswith('/dev'):
+            disk.isrem = check_removable(dev)
+        disk.label = label_map.get(device, '')
+        if mntops.startswith('rw'):             # read only
             disk.rw = True
         elif mntops.startswith('ro'):
             disk.rw = False
         else:
             disk.rw = not bool(stat.f_flag & os.ST_RDONLY)
 
-        disk.label = label_map.get(device, '')
+        # get disk usage information
+        # http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/statvfs.h.html
+        # convert to bytes, then output units
+        stat = os.statvfs(mntp)
+        disk.ocap  = stat.f_frsize * stat.f_blocks     # keep for later
+        disk.cap   = disk.ocap / outunit
+        disk.free  = stat.f_frsize * stat.f_bavail / outunit
+        disk.oused = stat.f_frsize * (stat.f_blocks - stat.f_bfree) # for later
+        disk.used  = disk.oused / outunit
+        disk.pcnt  = disk.oused / disk.ocap * 100
+
         disks.append(disk)
 
-    # look at /dev/disks again for the unmounted
-    if show_all:
+    if show_all:    # look at /dev/disks again for the unmounted
         for devname in label_map:
             dev = basename(devname)
             exists = [ disk for disk in disks if disk.dev == dev ]
             if not exists:
-                disk = Info(
+                disk = DiskInfo(
                     cap=0, free=0, ocap=0, pcnt=0, used=0,
                     dev = dev,
                     ismntd = False, mntp = '',
                     isnet = False,
-                    isopt = is_optical(Info(dev=dev, fmt=None)),
+                    isopt = check_optical(DiskInfo(dev=dev, fmt=None)),
                     isram = False,   # no such thing?
-                    isrem = is_removable(dev),
+                    isrem = check_removable(dev),
                     label = label_map[devname],
                     rw = None,
                 )
                 disks.append(disk)
-                disks.sort(key=lambda disk: disk.dev)
+                disks.sort(key=lambda disk: disk.dev)  # sort again :-/
 
     if debug:
         print()
@@ -185,6 +181,44 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
             print()
     return disks
 
+
+def get_meminfo(outunit, debug=False):
+    ''' Returns a dictionary holding the current memory info,
+        divided by the ouptut unit.  If mem info can't be read, returns None.
+    '''
+    meminfo = MemInfo()
+    try:
+        with open(memfname) as infile:
+            lines = infile.readlines()
+    except IOError:
+        return None
+
+    for line in lines:                      # format: 'MemTotal:  511456 kB\n'
+        tokens = line.split()
+        if tokens:
+            name, value = tokens[0][:-1], tokens[1]  # rm :
+            #~ if len(tokens) > 2:
+            if len(tokens) == 2:
+                continue
+            unit = tokens[2].lower()
+
+            # parse_result to bytes  TODO
+            value = int(value)
+            if   unit == 'kb': value = value * 1024  # most likely
+            elif unit ==  'b': value = value
+            elif unit == 'mb': value = value * 1024 * 1024
+            elif unit == 'gb': value = value * 1024 * 1024 * 1024
+
+            setattr(meminfo, name, value / outunit)
+
+    cach = meminfo.Cached + meminfo.Buffers
+    meminfo.Used = meminfo.MemTotal - meminfo.MemFree - cach
+    meminfo.SwapUsed = (meminfo.SwapTotal - meminfo.SwapCached -
+                        meminfo.SwapFree)
+    return meminfo
+
+
+# -- To Be Removed -----------------------------------------------------------
 
 def get_diskinfo_old(outunit, show_all=False, debug=False, local_only=False):
     ''' Returns a list holding the current disk info.
@@ -387,38 +421,4 @@ def get_udisks2_info(disks, show_all, debug):
         pass
     return err
 
-
-def get_meminfo(outunit, debug=False):
-    ''' Returns a dictionary holding the current memory info,
-        divided by the ouptut unit.  If mem info can't be read, returns None.
-    '''
-    meminfo = Info()
-    try:
-        with open(memfname) as f:
-            lines = f.readlines()
-            lines.sort()
-    except IOError:
-        return None
-
-    for line in lines:  # format: 'MemTotal:  511456 kB\n'
-        tokens = line.split()
-        if tokens:
-            name, value = tokens[0][:-1], tokens[1]  # rm :
-            if len(tokens) > 2:
-                unit = tokens[2].lower()
-
-            # parse_result to bytes  TODO
-            value = int(value)
-            if   unit == 'kb': value = value * 1024  # most likely  - NOT
-            elif unit ==  'b': value = value
-            elif unit == 'mb': value = value * 1024 * 1024
-            elif unit == 'gb': value = value * 1024 * 1024 * 1024
-
-            setattr(meminfo, name, value / outunit)
-
-    cach = meminfo.Cached + meminfo.Buffers
-    meminfo.Used = meminfo.MemTotal - meminfo.MemFree - cach
-    meminfo.SwapUsed = (meminfo.SwapTotal - meminfo.SwapCached -
-                        meminfo.SwapFree)
-    return meminfo
 
