@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 '''
-    %prog - Free Resource Printer - (C) 2005-2018, Mike Miller
+    %(prog)s - Free Resource Printer - (C) 2005-2018, Mike Miller
     A program to print available free resources in delicious flavors.
     License: GPLv3+.
 
-    usage: %prog [options]
+    usage: %(prog)s [options]
 
     TODO:  refactoring
 
-        - port ansi to newer module
-        - put gear on /boot/efi
         - move icon decoding and uploading to pform module
         - put icons into data?
+        - move version to meta
+        - port ansi to newer module
 '''
 import os
 import sys
@@ -43,8 +43,8 @@ def setup():
                         help='Include unmounted devices and tmpfs mounts.')
     parser.add_argument('-b', '--binary',
                         action='store_true', dest='binary', default=_binary,
-                        help='Use propeller-head binary units (2^10) instead '
-                        'of human/SI units (10^3).')
+                        help='Use propeller-head binary units (2¹⁰) instead '
+                        'of human/SI units (10³).')
     parser.add_argument('-d', '--debug',
                         action='store_true', dest='debug', default=_debug,
                         help='Turns on verbose debugging output.')
@@ -67,7 +67,7 @@ def setup():
                         default=_incolor, choices=toggle_choices,
                         help='Color: (%s)' % ', '.join(toggle_choices))
     parser.add_argument('--version', action='version',
-                        version='%(prog)s ' + __version__)
+                        version=__version__)
 
     opts = parser.parse_args()
 

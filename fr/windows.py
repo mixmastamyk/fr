@@ -3,6 +3,7 @@
     License: GPLv3+.
 '''
 from __future__ import print_function
+import sys
 import os
 import locale
 import platform
@@ -12,8 +13,8 @@ try:
                            get_perf_data, get_perf_info, get_mem_info,
                            get_vol_info )
 except ImportError:
-    #~ sys.exit('Error: winstats module not found.  C:\> pip install winstats')
-    pass
+    sys.exit('Error: winstats module not found.  C:\> pip3 install winstats')
+
 try:
     import colorama
     colorama.init()
@@ -28,7 +29,7 @@ try:
 except AttributeError:
     print('Setting exit codes: OS OK')
     os.EX_OK = 0
-    os.EX_IOERROR = 74  # ?
+    os.EX_IOERROR = 74
 
 
 version = platform.win32_ver()[1]

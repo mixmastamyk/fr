@@ -219,10 +219,10 @@ def print_diskinfo(diskinfo, widelayout, incolor):
 def print_meminfo(meminfo, widelayout, incolor):
     ''' Memory information output function. '''
     # prep Mem numbers
-    totl = meminfo.MemTotal
-    cach = meminfo.Cached + meminfo.Buffers
-    free = meminfo.MemFree
-    used = meminfo.Used
+    totl = meminfo.memtotal
+    cach = meminfo.cached + meminfo.buffers
+    free = meminfo.memfree
+    used = meminfo.used
     if opts.debug:
         print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
 
@@ -232,11 +232,11 @@ def print_meminfo(meminfo, widelayout, incolor):
     rlblcolor = ansi.get_label_tmpl(usep, opts.width, opts.hicolor)
 
     # Prepare Swap numbers
-    swpt = meminfo.SwapTotal
+    swpt = meminfo.swaptotal
     if swpt:
-        swpf = meminfo.SwapFree
-        swpc = meminfo.SwapCached
-        swpu = meminfo.SwapUsed
+        swpf = meminfo.swapfree
+        swpc = meminfo.swapcached
+        swpu = meminfo.swapused
         swfp = float(swpf) / swpt * 100       # % free of total sw
         swcp = float(swpc) / swpt * 100       # % cache
         swup = float(swpu) / swpt * 100       # % used

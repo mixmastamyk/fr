@@ -40,15 +40,15 @@ class DiskInfo(Info):
 
 class MemInfo(Info):
     ''' System memory information. '''
-    pass
+    def __init__(self, **kwargs):
 
-
-#~ def run(cmd, shell=True, debug=False):
-    #~ 'Run a command and return the output.'
-    #~ proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
-    #~ (out, _) = proc.communicate()  # no need for stderr
-    #~ if debug:
-        #~ print(cmd)
-        #~ print(out)
-    #~ return out
+        self.buffers    = None
+        self.cached     = None
+        self.memfree    = None
+        self.memtotal   = None
+        self.swapcached = None
+        self.swapfree   = None
+        self.swaptotal  = None
+        self.swapused   = None
+        self.used       = None
 

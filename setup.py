@@ -2,15 +2,17 @@
 import os
 from distutils.core import setup
 
-# grab metadata
-version = '1.00'
-with open('fr/fr') as f:
-    for line in f:
-        if line.lstrip().startswith('__version__'):
-            try:
-                version = line.split("'")[1]
-            except IndexError:  pass
-            break
+#~ # grab metadata
+#~ version = '1.00'
+#~ with open('fr/fr') as f:
+    #~ for line in f:
+        #~ if line.lstrip().startswith('__version__'):
+            #~ try:
+                #~ version = line.split("'")[1]
+            #~ except IndexError:  pass
+            #~ break
+from fr.meta import (pkgname, version, email, license, authors, description,
+                     repo_url)
 
 # readme is needed at upload time, not install time
 try:
@@ -20,32 +22,30 @@ except IOError:
     long_description = ''
 
 # install helper script?
-scripts = ['fr/fr']
+scripts = [pkgname + '/' + pkgname]
 if os.name == 'nt':
     scripts.append('fr.cmd')
 
 
 setup(
-    name          = 'fr',
+    name          = pkgname,
     version       = version,
-    description   = 'A command-line tool to print free resources in' +
-                    ' delicious flavors.',
-    author        = 'Mike Miller',
-    author_email  = 'mixmastamyk@bitbucket.org',
-    url           = 'https://bitbucket.org/mixmastamyk/fr',
-    download_url  = 'https://bitbucket.org/mixmastamyk/fr/get/default.tar.gz',
-    license       = 'GPLv3',
-    packages      = ['fr'],
+    description   = description,
+    author        = authors,
+    author_email  = email,
+    url           = repo_url,
+    download_url  = '',
+    license       = license,
+    packages      = [pkgname],
     scripts       = scripts,
     extras_require = {
-        'win': ['winstats'],
-        'color': ['colorama'],
+        'win': ['winstats', 'colorama'],
     },
     python_requires='>3.6.0',
 
     long_description = long_description,
     classifiers     = [
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',

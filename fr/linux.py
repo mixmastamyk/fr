@@ -206,7 +206,7 @@ def get_meminfo(opts):
     for line in lines:                      # format: 'MemTotal:  511456 kB\n'
         tokens = line.split()
         if tokens:
-            name, value = tokens[0][:-1], tokens[1]  # rm :
+            name, value = tokens[0][:-1].lower(), tokens[1]  # rm :
             #~ if len(tokens) > 2:
             if len(tokens) == 2:
                 continue
@@ -221,8 +221,8 @@ def get_meminfo(opts):
 
             setattr(meminfo, name, value / outunit)
 
-    cache = meminfo.Cached + meminfo.Buffers
-    meminfo.Used = meminfo.MemTotal - meminfo.MemFree - cache
-    meminfo.SwapUsed = (meminfo.SwapTotal - meminfo.SwapCached -
-                        meminfo.SwapFree)
+    cache = meminfo.cached + meminfo.buffers
+    meminfo.used = meminfo.memtotal - meminfo.memfree - cache
+    meminfo.swapused = (meminfo.swaptotal - meminfo.swapcached -
+                        meminfo.swapfree)
     return meminfo
