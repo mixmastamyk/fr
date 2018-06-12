@@ -24,21 +24,23 @@ out         = sys.stdout.write
 locale.setlocale(locale.LC_ALL, '')
 
 if TERM == 'linux':             # Basic Linux console, use ascii
-    _ramico     = 'r'
-    _diskico    = 'd'
-    _imgico     = 'i'
-    _unmnico    = 'u'
-    _remvico    = 'm'
-    _netwico    = 'n'
-    _discico    = 'o'
-    _emptico    = '0'
-    _ellpico    = '~'
-    _usedico    = '#'
-    _freeico    = '-'
-    _warnico    = '!'
-    _brckico    = ('[', ']')
     hicolor     = False
     boldbar     = True
+    _brckico    = ('[', ']')
+    _cmonico    = '='
+    _discico    = 'o'
+    _diskico    = 'd'
+    _ellpico    = '~'
+    _emptico    = '0'
+    _freeico    = '-'
+    _gearico    = 's'
+    _imgico     = 'i'
+    _netwico    = 'n'
+    _ramico     = 'r'
+    _remvico    = 'm'
+    _unmnico    = 'u'
+    _usedico    = '#'
+    _warnico    = '!'
 elif TERM == 'xterm-256color':  # X11, etc.
     hicolor     = True
     boldbar     = False

@@ -10,7 +10,6 @@
 
         - move icon decoding and uploading to pform module
         - put icons into data?
-        - move version to meta
         - port ansi to newer module
 '''
 import os
@@ -95,7 +94,7 @@ def setup():
     if extrawidth > 0:
         opts.colwidth += min(extrawidth // 10, _extra_cols_cap)  # cap at
 
-    if opts.debug:
+    if True: # opts.debug:
         print('termcols:', opts.termcols, '_colwidth:', _colwidth)
         print('_extra_cols_at:', _extra_cols_at)
         print('extrawidth:', extrawidth)
@@ -128,10 +127,10 @@ def setup():
 
 def main(opts):
     ''' Let's get it on... '''
-    incolor     = opts.incolor  # cache
-    longestpth  = opts.colwidth + 1  # extra space
+    longestpth  = opts.colwidth + 1     # extra space
     widelayout  = opts.termcols > 89
-    numcols     = 6
+    numcols     = 6                     # data columns, w/o graph
+    sep         = ' '
 
     fr.load_config(opts)
     pform = opts.pform
@@ -141,7 +140,7 @@ def main(opts):
         print('opts:', opts)    # or will get clobbered by set
         print('unitstr:', unitstr)
 
-    outunit_fmt = fmtval(opts.outunit, override_prec=0, spacing=False, trunc=False)
+    outunit_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False)
     out(f'\nFree Resources in Blocks of 1 {unitstr} ({outunit_fmt} bytes)')
 
     meminfo = pform.get_meminfo(opts)
@@ -149,10 +148,8 @@ def main(opts):
         print(f'\nError: Could not read memory info @ {pform.memfname}.')
         sys.exit(os.EX_IOERR)
 
-    diskinfo = pform.get_diskinfo(opts,
-                                  local_only=opts.local,
-                                  show_all=opts.all,
-                                  )
+    diskinfo = pform.get_diskinfo(opts, local_only=opts.local,
+                                  show_all=opts.all)
     if not diskinfo:
         print('\nError: Could not read disk information.')
         sys.exit(os.EX_IOERR)
@@ -165,12 +162,12 @@ def main(opts):
             longestpth = pathlen
 
     # cap longest path
-    dwidth = opts.colwidth * 2
-    longestpth = longestpth if longestpth < dwidth else dwidth
+    maxpath = opts.colwidth * 2
+    longestpth = min(longestpth, maxpath)
 
     if not opts.width:  # automatic width
         #         rm path col,   add space each, return path col, graph padding
-        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 4
+        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 2
         if widelayout:
             opts.width = opts.termcols - taken
         else:
@@ -178,11 +175,11 @@ def main(opts):
 
     # Headers
     print()
-    out(fmtstr('DEVICE', leftjust=True))
-    out(fmtstr('VOLUME', leftjust=True))
-    out(fmtstr('CAPACITY') + ' ')   # xtra space?
+    out(fmtstr('DEVICE', leftjust=True) + sep)
+    out(fmtstr('VOLUME', leftjust=True) + sep)
+    out(fmtstr('CAPACITY') + sep)
     for header in ['USED', 'FREE']:
-        out(fmtstr(header))
+        out(fmtstr(header) + sep)
 
     if widelayout:
         if ' ' in pform.col_lblw:   # figure expanding label (on posix)
@@ -190,17 +187,17 @@ def main(opts):
             while len(lbl) < opts.colwidth:
                 lbl.insert(5, ' ')
             lbl = ''.join(lbl)
-            extspace = 2
+            extspace = 0
         else:
             lbl = pform.col_lblw    # win
             extspace = 3
-        out(f'{" " * (opts.width + extspace)} {fmtstr(lbl)}')
+        out(f'{sep * (opts.width + extspace)} {fmtstr(lbl)}')
     else:
         out('  ' + fmtstr(pform.col_lbls))
 
     print()
-    print_meminfo(meminfo, widelayout, incolor)
-    print_diskinfo(diskinfo, widelayout, incolor)
+    print_meminfo(meminfo, widelayout, opts.incolor)
+    print_diskinfo(diskinfo, widelayout, opts.incolor)
 
     return os.EX_OK
 

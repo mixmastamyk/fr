@@ -2,12 +2,14 @@
     windows.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 '''
-from __future__ import print_function
 import sys
 import os
 import locale
 import platform
 import stat
+
+from fr.utils import DiskInfo, MemInfo
+
 try:
     from winstats import ( _diskusage, get_drives, get_drive_type, get_fs_usage,
                            get_perf_data, get_perf_info, get_mem_info,
@@ -15,6 +17,16 @@ try:
 except ImportError:
     sys.exit('Error: winstats module not found.  C:\> pip3 install winstats')
 
+
+# icons and graphics chars?
+#~ locale.setlocale(locale.LC_ALL, ('english_united-states', '437'))
+#~ os_encoding = locale.getpreferredencoding()
+#~ print('\n***********  encoding:', os_encoding)  # cp1252
+
+# pkg below seems to work, but most chars not available under win7 fonts
+#~ import win_unicode_console
+#~ win_unicode_console.enable()
+# win_unicode_console.disable()
 try:
     import colorama
     colorama.init()
@@ -22,16 +34,40 @@ try:
 except ImportError:
     coloravail = False
 
-from fr.utils import Info
+# ascii  :-/
+_brckico = ('|', '|')
+_cmonico = '='
+_discico = 'o'
+_diskico = 'd'
+_ellpico = '~'
+_emptico = '0'
+_freeico = '-'
+_gearico = 's'
+_imgico  = 'i'
+_netwico = 'n'
+_ramico  = 'r'
+_remvico = '>'
+_unmnico = 'u'
+_usedico = '#'
 
-try:
-    os.EX_OK
-except AttributeError:
-    print('Setting exit codes: OS OK')
-    os.EX_OK = 0
-    os.EX_IOERROR = 74
+# cp 437, doesn't work any more.  :-/
+# cp 1252 - blah
+#~ _brckico = ('\x7c', '\xb3') # vert line
+#~ _cmonico = '\x04'       # cache mono
+#~ _discico = '\xe8'       # cap phi
+#~ _diskico = '\xfe'       # block
+#~ _ellpico = '\xaf'       # >>
+#~ _emptico = '\xed'       # lc phi
+#~ _freeico = '\xf9'       # dot
+#~ _imgico  = 'i'
+#~ _netwico = '\x17'       # ^V
+#~ _ramico  = '\xf0'       # three horz lines
+#~ _remvico = '\x1d'       # <->
+#~ _unmnico = '\7f'        # empty house
+#~ _usedico = '\xfe'       # block
 
 
+locale.setlocale(locale.LC_NUMERIC, '')
 version = platform.win32_ver()[1]
 win7ver = '6.1.7600'
 vistver = '6.0.6000'
@@ -40,23 +76,6 @@ hicolor  = False
 boldbar  = True
 col_lblw = 'CACHE'
 col_lbls = 'CACHE'
-
-# icons and graphics chars
-encoding = 'cp437'
-locale.setlocale(locale.LC_ALL, ('english_united-states', '437'))
-locale.setlocale(locale.LC_NUMERIC, '')
-_ramico  = '\xf0'       # three horz lines
-_diskico = '\xfe'       # block
-_unmnico = '\7f'        # empty house
-_remvico = '\x1d'       # <->
-_netwico = '\x17'       # ^V
-_discico = '\xe8'       # cap phi
-_emptico = '\xed'       # lc phi
-_ellpico = '\xaf'       # >>
-_usedico = '\xfe'       # block
-_cmonico = '\x04'       # cache mono
-_freeico = '\xf9'       # dot
-_brckico = ('\xb3', '\xb3') # vert line
 
 _drive_type_result = {
     0: ('unk', None),       # UNKNOWN
@@ -68,6 +87,14 @@ _drive_type_result = {
     6: ('isram', True),     # RAMDISK
 }
 
+try:
+    os.EX_OK
+except AttributeError:
+    #~ Setting exit codes: OS OK, etc.
+    os.EX_OK = 0
+    os.EX_IOERROR = 74
+
+
 
 class ColorNotAvail(Exception):
     ''' Error: color support not available.  Install colorama:
@@ -77,14 +104,17 @@ class ColorNotAvail(Exception):
         return f'{self.__class__.__name__}: {self.__doc__}'
 
 
-def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
+def get_diskinfo(opts, show_all=False, local_only=False):
     ''' Returns a list holding the current disk info,
         stats divided by the ouptut unit.
     '''
-    disks = {}
+    #~ disks = {}
+    disks = []
+    outunit = opts.outunit
+
     for drive in get_drives():
         drive += ':\\'
-        disk = Info(dev=drive)
+        disk = DiskInfo(dev=drive)
         try:  usage = get_fs_usage(drive)
         except WindowsError:  # disk not ready, request aborted, etc.
             if show_all:  usage = _diskusage(0, 0, 0)
@@ -99,32 +129,31 @@ def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
         else:
             disk.pcnt = 0
         disk.mntp   = ''
-        disk.ismntd = True
-        disk.isnet  = None
-        disk.isopt  = None
-        disk.isram  = None
-        disk.isrem  = None
+        disk.ismntd = True  # TODO needs work
+
+        # type is not working on Win7 under VirtualBox?
         dtint, dtstr = get_drive_type(drive)
         setattr(disk, *_drive_type_result[dtint])
-        #~ disk.rw = os.access(drive, os.W_OK) # doesn't work on optical
+
+        disk.rw = os.access(drive, os.W_OK) # doesn't work on optical
         if usage.total:    # this not giving correct result on Win7 RTM either
             disk.rw = stat.S_IMODE(os.stat(drive).st_mode) & stat.S_IWRITE
         else:
             disk.rw = False
-        disks[drive] = disk
+        disks.append(disk)
 
-    if debug:
-        print(disks)
-    keys = sorted(disks.keys())
-    return [ disks[dev]  for dev in keys ]
+    if opts.debug:
+        for disk in disks:
+            print(disk.dev, disk, '\n')
+    return disks
 
 
-
-def get_meminfo(outunit, debug=False):
+def get_meminfo(opts):
     ''' Returns a dictionary holding the current memory info,
         divided by the ouptut unit.
     '''
-    meminfo = Info()
+    meminfo = MemInfo()
+    outunit = opts.outunit
     mstat = get_mem_info()  # from winstats
     pinf = get_perf_info()
     try:
@@ -133,23 +162,23 @@ def get_meminfo(outunit, debug=False):
         pgpcnt = 0
 
     totl = mstat.TotalPhys
-    meminfo.MemTotal = totl / float(outunit)
+    meminfo.memtotal = totl / float(outunit)
     used = totl * mstat.MemoryLoad / 100.0  # percent, more reliable
-    meminfo.Used = used / float(outunit)
+    meminfo.used = used / float(outunit)
     left = totl - used
 
     # Cached
-    cach = pinf.SystemCacheBytes
-    if cach > left and version >= win7ver:
-        # Win7 RTM bug :/ this cach number is bogus
+    cache = pinf.SystemCacheBytes
+    if cache > left and version >= win7ver:
+        # Win7 RTM bug :/ this cache number is bogus
         free = get_perf_data(r'\Memory\Free & Zero Page List Bytes', 'long')[0]
-        cach = left - free
-        meminfo.MemFree = free / float(outunit)
+        cache = left - free
+        meminfo.memfree = free / float(outunit)
     else:
-        meminfo.MemFree = (totl - used - cach) / float(outunit)
-    meminfo.Buffers = 0
+        meminfo.memfree = (totl - used - cache) / float(outunit)
+    meminfo.buffers = 0
 
-    meminfo.Cached = cach / float(outunit)
+    meminfo.cached = cache / float(outunit)
 
     # SWAP  these numbers are actually commit charge, not swap; fix
     #       should not contain RAM :/
@@ -158,12 +187,12 @@ def get_meminfo(outunit, debug=False):
     swpu = swpt * pgpcnt
     swpf = swpt - swpu
 
-    meminfo.SwapTotal = swpt / float(outunit)
-    meminfo.SwapFree = swpf / float(outunit)
-    meminfo.SwapUsed = swpu / float(outunit)
-    meminfo.SwapCached = 0  # A linux stat for compat
+    meminfo.swaptotal = swpt / float(outunit)
+    meminfo.swapfree = swpf / float(outunit)
+    meminfo.swapused = swpu / float(outunit)
+    meminfo.swapcached = 0  # A linux stat for compat
 
-    if debug:
+    if opts.debug:
         import locale
         fmt = lambda x: locale.format('%d', x, True)
         print()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
-from distutils.core import setup
-
+#~ from distutils.core import setup
+from setuptools import setup
 #~ # grab metadata
 #~ version = '1.00'
 #~ with open('fr/fr') as f:

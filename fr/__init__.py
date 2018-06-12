@@ -7,6 +7,9 @@ from . import ansi
 _outunit = 1000000, 'Megabyte'  # 1 Megabyte default
 opts, pform = None, None
 out = sys.stdout.write
+if sys.platform[:3] == 'win':  # :-(
+    def out(*args, end=''):
+        print(*args, end=end)
 
 # default icons
 _ramico  = '⌁'
@@ -14,10 +17,10 @@ _diskico = '▪'
 _cmonico = '▒'           # cache mono
 _discico = '◗'
 _ellpico = '…'           # ellipsis
-_emptico = '∅'           # empty set
+_emptico = '∅'          # empty set
 _freeico = '░'
 _gearico = '⚙'
-_imgico  = '🗎'  # '⦾'
+_imgico  = '🗎'          # '⦾'
 _netwico = '⇅'
 _remvico = '⇄'
 _unmnico = '▫'
@@ -27,7 +30,7 @@ _brckico = ('▕', '▏')    # start, end "brackets"
 
 
 def load_config(options):
-    ''' Load vars and icons. '''
+    ''' Load options, platform, and icons. '''
     global opts, pform
     opts = options
     pform = options.pform
@@ -42,27 +45,31 @@ def fmtstr(text='', colorstr=None, leftjust=False, trunc=True):
         specifications.
     '''
     colwidth = opts.colwidth
-    if leftjust:  width = -colwidth
-    else:         width =  colwidth
+    if leftjust:
+        width = -colwidth
+    else:
+        width =  colwidth
+
     if trunc:
         #~ cwd = (colwidth * 2) if trunc == 'left' and plat != 'win' else colwidth
         cwd = (colwidth * 2) if trunc == 'left' else colwidth
         if len(text) > cwd:
             text = truncstr(text, cwd, align=trunc)  # truncate w/ellipsis
-    value = '%%%ss' % width %  text
+
+    value = '%%%ss' % width % text
     if opts.incolor and colorstr:
         return colorstr % value
     else:
         return value
 
 
-def fmtval(value, colorstr=None, override_prec=None, spacing=True, trunc=True):
+def fmtval(value, colorstr=None, precision=None, spacing=True, trunc=True):
     ''' Formats and returns a given number according to specifications. '''
     colwidth = opts.colwidth
     # get precision
-    if override_prec is None:
-        override_prec = opts.precision
-    fmt = '%%.%sf' % override_prec
+    if precision is None:
+        precision = opts.precision
+    fmt = '%%.%sf' % precision
 
     # format with decimal mark, separators
     result = locale.format(fmt, value, True)
@@ -129,6 +136,7 @@ def get_units(unit, binary=False):
 
 def print_diskinfo(diskinfo, widelayout, incolor):
     'Disk information output function.'
+    sep = ' '
     if opts.relative:
         import math
         base = max([ disk.ocap  for disk in diskinfo ])
@@ -167,36 +175,34 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
         )
         if widelayout:
-            out(fmtstr(ico + " " + disk.dev, leftjust=True))
-            out(fmtstr(disk.label, leftjust=True))
+            out(fmtstr(ico + sep + disk.dev, leftjust=True) + sep)
+            out(fmtstr(disk.label, leftjust=True) + sep)
             if disk.cap:
                 if disk.rw:
-                    out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
+                    out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
                     out(fmtval(disk.free, lblcolor))
                 else:
-                    out(f'{fmtval(disk.cap)} {fmtstr()}')
+                    out(f'{fmtval(disk.cap)} {fmtstr()} ')
                     out(fmtstr(_emptico, ansi.fdimbb))
             else:
-                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
+                out(fmtstr(_emptico, ansi.fdimbb))
 
             if disk.cap:
                 out(' ')
-                if disk.rw:
-                    ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
+                if disk.rw:  # factoring this caused colored brackets
+                    ansi.rainbar(data, gwidth, incolor,
+                                 hicolor=opts.hicolor,
                                  cbrackets=_brckico)
                 else:
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
 
                 if opts.relative and opts.width != gwidth:
                     out(' ' * (opts.width - gwidth - 1))
-                out(f'  {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
-            #~ else:  # 0 for mountpoint
-                #~ out(f'  {" " * gwidth}{fmtstr(_emptico, ansi.fdimbb, leftjust=1)}')
+                out(f' {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
             print()
         else:
-            out(fmtstr('%s %s' % (ico, disk.dev), leftjust=True))
-            if opts.showlbs:
-                out(fmtstr(disk.label, leftjust=True))
+            out(fmtstr(f'{ico} {disk.dev}', leftjust=True))
+            out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
                 out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
                 out(fmtval(disk.free, lblcolor))
@@ -223,6 +229,7 @@ def print_meminfo(meminfo, widelayout, incolor):
     cach = meminfo.cached + meminfo.buffers
     free = meminfo.memfree
     used = meminfo.used
+    sep = ' '
     if opts.debug:
         print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
 
@@ -257,17 +264,15 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, frep, None,  None, False),               # free
     )
     if widelayout:
-        out(fmtstr(_ramico + ' RAM', leftjust=True))
-        #~ if opts.showlbs:
-        out(fmtstr(' '))
-        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)}')
-        out(fmtval(free, rlblcolor))
+        out(fmtstr(_ramico + ' RAM', leftjust=True) + sep)
+        out(fmtstr(' ') + sep)  # volume column
+        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} ')
+        out(fmtval(free, rlblcolor) + sep)
 
         # print graph
-        out(' ')  # two extra spaces right
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print(' ', fmtval(cach, swap_color))
+        print('', fmtval(cach, swap_color))
     else:
         out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()}')
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
@@ -286,12 +291,11 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, swfp, None,  None, False),    # free
     )
     if widelayout:
-        out(fmtstr(_diskico + ' SWAP', leftjust=True))
-        #~ if opts.showlbs:
-        out(fmtstr(' '))
+        out(fmtstr(_diskico + ' SWAP', leftjust=True) + sep)
+        out(fmtstr(' ') + sep)
         if swpt:
-            out(fmtval(swpt))
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
+            out(fmtval(swpt) + sep)
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
         else:
             print(fmtstr(_emptico, ansi.fdimbb))
 
@@ -306,8 +310,8 @@ def print_meminfo(meminfo, widelayout, incolor):
     else:
         out(fmtstr(_diskico + ' SWAP', leftjust=True))
         if swpt:
-            out(f'{fmtstr(" ")} {fmtval(swpt)}')
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)}')
+            out(f'{fmtstr(" ")} {fmtval(swpt)} ')
+            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
             if swpc:
                 out('  ' + fmtval(swpc, swap_color))
             print()

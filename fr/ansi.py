@@ -3,9 +3,13 @@
     (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
 '''
 import sys
-out             = sys.stdout.write
 
-if True:  # fold init
+out = sys.stdout.write
+if sys.platform[:3] == 'win':  # don't bypass streams :-(
+    def out(*args, end=''):
+        print(*args, end=end)
+
+if True:  # foldable init
     # fg
     black       = 30
     red         = 31
@@ -125,7 +129,7 @@ def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
 
 def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
     'Creates a bar graph.'
-    threshold = 100.0 / (maxwidth * 2)  # if smaller than 1/2 of one char wide
+    threshold = 100.0 // (maxwidth * 2)  # if smaller than 1/2 of one char wide
     position = 0
     begpcnt = data[0][1] * 100
     endpcnt = data[-1][1] * 100
