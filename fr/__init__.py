@@ -231,7 +231,7 @@ def print_meminfo(meminfo, widelayout, incolor):
     used = meminfo.used
     sep = ' '
     if opts.debug:
-        print(f'  totl: {totl}, used: {used}, free: {free}, cach: {cach}')
+        print(f'\n  totl: {totl}, used: {used}, free: {free}, cach: {cach}\n')
 
     usep = float(used) / totl * 100           # % used of total ram
     cacp = float(cach) / totl * 100           # % cache
@@ -301,11 +301,10 @@ def print_meminfo(meminfo, widelayout, incolor):
 
         # print graph
         if swpt:
-            out(' ')  # two extra spaces right
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             if swpc:
-                out('  ' + fmtval(swpc, swap_color))
+                out(' ' + fmtval(swpc, swap_color))
             print()
     else:
         out(fmtstr(_diskico + ' SWAP', leftjust=True))

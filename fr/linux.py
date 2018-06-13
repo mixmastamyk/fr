@@ -209,7 +209,6 @@ def get_meminfo(opts):
         tokens = line.split()
         if tokens:
             name, value = tokens[0][:-1].lower(), tokens[1]  # rm :
-            #~ if len(tokens) > 2:
             if len(tokens) == 2:
                 continue
             unit = tokens[2].lower()

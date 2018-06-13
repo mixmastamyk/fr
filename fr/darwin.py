@@ -3,12 +3,11 @@
     derived from linux.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 '''
-from __future__ import print_function
 import os, locale, re
 from os.path import basename
-from fr.utils import Info, run
+from fr.utils import DiskInfo, MemInfo, run
 
-devfilter   = ('none', 'tmpfs', 'udev', 'devfs', 'map')
+devfilter   = (b'devfs', b'map')
 diskcmd     = '/bin/df -k'
 coloravail  = True
 hicolor     = None
@@ -30,104 +29,125 @@ else:
 locale.setlocale(locale.LC_ALL, '')
 
 
-def get_diskinfo(outunit, show_all=False, debug=False, local_only=False):
+def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
     ''' Returns a list holding the current disk info,
         stats divided by the ouptut unit.
     '''
-    disks = {}
+    outunit = opts.outunit
+    disks = []
     try:
         lines = run(diskcmd).splitlines()[1:]  # dump header
-        for i, line in enumerate(lines):
-            if line:
-                tokens  = line.split()
-                dev = basename(tokens[0])
-                disk = Info()
-                disk.isram  = None
-                if dev in devfilter:
-                    if show_all:
-                        if tokens[0] == 'map':
-                            tokens = [ ' '.join(tokens[0:2]) ] + tokens[2:]
-                            dev = basename(tokens[0])
-                        dev += str(i)
-                        disk.isram = True
-                    else:
-                        disk.isram = False; continue
-                disk.dev = dev
-                # convert to bytes, then output units
-                disk.ocap   = float(tokens[1]) * 1024
-                disk.cap    = disk.ocap / outunit
-                disk.free   = float(tokens[3]) * 1024 / outunit
-                disk.label  = '' # dummy values for now
-                disk.mntp   = ' '.join( tokens[8:] )
-                disk.pcnt   = int(tokens[4][:-1])
-                disk.used   = float(tokens[2]) * 1024 / outunit
-                disk.ismntd = True
-                disk.isnet  = ':' in tokens[0]  # cheesy but works
-                if local_only and disk.isnet:
+        for line in lines:
+            tokens  = line.split()
+            first_token = tokens[0]
+            dev = basename(first_token)
+            disk = DiskInfo()
+            if first_token in devfilter:
+                if show_all:
+                    if first_token == b'map':  # fix alignment :-/
+                        tokens[0] = first_token + b' ' + tokens[1]
+                        dev = tokens[0]
+                        del tokens[1]
+                    disk.isram = True
+                else:
                     continue
-                disk.isopt  = None
-                disk.isrem  = None
-                disk.rw     = True
 
-                disks[dev] = disk
+            disk.dev = dev.decode('utf8')
+            # convert to bytes, then output units
+            disk.ocap   = float(tokens[1]) * 1024
+            disk.cap    = disk.ocap / outunit
+            disk.free   = float(tokens[3]) * 1024 / outunit
+            disk.label  = '*' # TODO: not sure how to get these
+            disk.mntp   = tokens[8].decode('utf8')
+            disk.pcnt   = int(tokens[4][:-1])
+            disk.used   = float(tokens[2]) * 1024 / outunit
+            disk.ismntd = True
+            disk.isnet  = ':' in tokens[0].decode('utf8')  # cheesy but works
+            if local_only and disk.isnet:
+                continue
+            disk.rw     = True
+            # ~ if disk.free < 1:
+                # ~ disk.rw = False
+
+            # ~ disk.isopt  = None  # TODO: not sure how to get these
+            # ~ disk.isrem  = None
+            disks.append(disk)
     except IOError:
         return None
 
-    if debug:
-        print(disks)
-    devices = sorted(disks.keys())
-    return [ disks[device]  for device in devices ]
+    if opts.debug:
+        print()
+        for disk in disks:
+            print(disk.dev, disk)
+            print()
+    return disks
 
 
-def get_meminfo(outunit, debug=False):
+def get_meminfo(opts):
     ''' Returns a dictionary holding the current memory info,
         divided by the ouptut unit.  If mem info can't be read, returns None.
         For Darwin / Mac OS X, interrogates the output of the sysctl and
         vm_stat utilities rather than /proc/meminfo
     '''
-    meminfo = Info()
-    ms = run('/usr/sbin/sysctl -a hw.memsize'.split(), shell=False)
-    su = run('/usr/sbin/sysctl -a vm.swapusage'.split(), shell=False)
+    outunit = opts.outunit
+    meminfo = MemInfo()
+    ms = run('/usr/sbin/sysctl -a hw.memsize'.split(), shell=False)   # TODO
+    su = run('/usr/sbin/sysctl -a vm.swapusage'.split(), shell=False) # combine
     vm = run('/usr/bin/vm_stat', shell=False)
 
-    # Process memsize info info
+    if opts.debug:
+        print()
+        print('ms:', ms)
+        print('su:', su)
+        print('vm:', vm.decode('ascii'))
+
+    # Process memsize info
     memsize = int(ms.split()[1])
 
     # Process vm_stat
-    vmLines = vm.split('\n')
-    LINE_RE = re.compile(r'^(.+)\: +(\d+)')
-    PAGESIZE = 4096
+    vmLines = vm.split(b'\n')
+    vmStats = MemInfo()
+    try:
+        PAGESIZE = int(vmLines[0].split()[-2])
+    except IndexError:
+        PAGESIZE = 4096
 
-    vmStats = Info()
-    for row in vmLines[1:8]:
-        m = LINE_RE.search(row.strip())
-        if m:
-            name = m.group(1).split()[1]
-            vmStats[name] = int(m.group(2)) * PAGESIZE
-        else:
-            raise ValueError("Can't parse '{0}'".format(row))
+    for line in vmLines[1:]:
+        if not line[0] == 80:  # b'P' Page..
+            break
+        tokens = line.split()
+        name, value = tokens[1][:-1].decode('ascii'), tokens[-1][:-1]
+        vmStats[name] = int(value) * PAGESIZE
 
-    meminfo.MemTotal = memsize / outunit
-    meminfo.MemFree  = vmStats.free / outunit
-    meminfo.Used     = (vmStats.wired + vmStats.active) / outunit
-    meminfo.Cached   = (vmStats.inactive + vmStats.speculative) / outunit
-    meminfo.Buffers  = 0
+    if opts.debug:
+        # ~ print(vmStats)
+        print()
 
-    # Parse vm.swapusage line from sysctl
-    SWAPUSAGE_RE = re.compile(
-     r'vm\.swapusage: total = ([\d\.]+)M  used = ([\d\.]+)M  free = ([\d\.]+)M'
-    )
-    m = SWAPUSAGE_RE.search(su.strip())
-    if m:
-        meminfo.SwapTotal = int(float(m.group(1)))
-        meminfo.SwapUsed  = int(float(m.group(2)))
-        meminfo.SwapFree  = int(float(m.group(3)))
-        meminfo.SwapCached = 0
-    else:
-        raise ValueError("Can't parse vm.swapusage line from sysctl '{0}'"
-                        ).format(su)
+    meminfo.memtotal = memsize / outunit
+    meminfo.memfree  = vmStats.free / outunit
+    meminfo.used     = (vmStats.wire + vmStats.active) / outunit
+    meminfo.cached   = (vmStats.inactive + vmStats.speculative) / outunit
+    meminfo.buffers  = 0
 
-    if debug:
+    # parse swap usage
+    su_values = su.split()[3::3]            # every third token
+    su_unit = chr(su_values[0][0]).lower()  # get unit, 'M'
+    PAGESIZE = 1024
+    if su_unit == b'm':
+        PAGESIZE = 1024 * 1024
+
+    su_values = [ float(val[:-1]) * PAGESIZE for val in su_values ]
+    swaptotal, swapused, swapfree = su_values
+
+    # swap set
+    meminfo.swaptotal = swaptotal or 1_000_000
+    meminfo.swapused  = swapused or    500_000
+    meminfo.swapfree  = swapfree or    500_000
+    meminfo.swapcached = 1
+
+    # ~ meminfo.swapused = (meminfo.swaptotal - meminfo.swapcached -
+                        # ~ meminfo.swapfree)
+    if opts.debug:
         print(meminfo)
     return meminfo
 

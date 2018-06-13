@@ -94,7 +94,7 @@ def setup():
     if extrawidth > 0:
         opts.colwidth += min(extrawidth // 10, _extra_cols_cap)  # cap at
 
-    if True: # opts.debug:
+    if opts.debug:
         print('termcols:', opts.termcols, '_colwidth:', _colwidth)
         print('_extra_cols_at:', _extra_cols_at)
         print('extrawidth:', extrawidth)
@@ -138,7 +138,6 @@ def main(opts):
     opts.outunit, unitstr = get_units(opts.unit, binary=opts.binary)
     if opts.debug:
         print('opts:', opts)    # or will get clobbered by set
-        print('unitstr:', unitstr)
 
     outunit_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False)
     out(f'\nFree Resources in Blocks of 1 {unitstr} ({outunit_fmt} bytes)')
@@ -196,7 +195,7 @@ def main(opts):
         out('  ' + fmtstr(pform.col_lbls))
 
     print()
-    print_meminfo(meminfo, widelayout, opts.incolor)
+    print_meminfo(meminfo, widelayout, opts.incolor)  # TODO print one at time
     print_diskinfo(diskinfo, widelayout, opts.incolor)
 
     return os.EX_OK

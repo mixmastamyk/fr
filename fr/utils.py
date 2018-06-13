@@ -1,5 +1,5 @@
 from __future__ import print_function
-#~ import subprocess
+import subprocess
 
 
 class Info(dict):
@@ -51,4 +51,14 @@ class MemInfo(Info):
         self.swaptotal  = None
         self.swapused   = None
         self.used       = None
+
+
+def run(cmd, shell=True, debug=False):
+    'Run a command and return the output.'
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
+    (out, _) = proc.communicate()  # no need for stderr
+    if debug:
+        print (cmd)
+        print (out)
+    return out
 
