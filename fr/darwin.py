@@ -2,11 +2,16 @@
     darwin.py - (C) 2013, Jonathan Eunice
     derived from linux.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
+
+    TODO:
+        - dark grey color is very black and hard to see.
+        - get volume names
 '''
 import os, locale, re
-from os.path import basename
+from os.path import basename, join
 from fr.utils import DiskInfo, MemInfo, run
 
+diskdir     = '/Volumes'
 devfilter   = (b'devfs', b'map')
 diskcmd     = '/bin/df -k'
 coloravail  = True
@@ -27,6 +32,26 @@ else:
     coloravail = False
 
 locale.setlocale(locale.LC_ALL, '')
+
+
+def get_label_map(opts):
+    label_map = {}
+
+    try:  # get labels from filesystem
+        for entry in os.scandir(diskdir):
+            if entry.name.startswith('.'):
+                continue
+            # ~ target = normpath(join(diskdir, os.readlink(entry.path)))
+            target = os.readlink(entry.path)
+            # ~ decoded_name = entry.name #.encode('utf8').decode('unicode_escape')
+            # ~ label_map[target] = decoded_name
+            label_map[target] = entry.name
+        if opts.debug:
+            print('\n\nlabel_map:', label_map)
+    except FileNotFoundError:
+        pass
+
+    return label_map
 
 
 def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
@@ -57,12 +82,16 @@ def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
             disk.ocap   = float(tokens[1]) * 1024
             disk.cap    = disk.ocap / outunit
             disk.free   = float(tokens[3]) * 1024 / outunit
-            disk.label  = '*' # TODO: not sure how to get these
-            disk.mntp   = tokens[8].decode('utf8')
             disk.pcnt   = int(tokens[4][:-1])
             disk.used   = float(tokens[2]) * 1024 / outunit
+
+            disk.mntp   = tokens[8].decode('utf8')
+            # TODO: better way to find label?
+            disk.label  = '?'
+            disk.label  = get_label_map(opts).get(disk.mntp, '')
+
             disk.ismntd = True
-            disk.isnet  = ':' in tokens[0].decode('utf8')  # cheesy but works
+            disk.isnet  = ':' in tokens[0].decode('utf8')  # cheesy, works?
             if local_only and disk.isnet:
                 continue
             disk.rw     = True
@@ -120,7 +149,7 @@ def get_meminfo(opts):
         vmStats[name] = int(value) * PAGESIZE
 
     if opts.debug:
-        # ~ print(vmStats)
+        print(vmStats)
         print()
 
     meminfo.memtotal = memsize / outunit
@@ -140,9 +169,9 @@ def get_meminfo(opts):
     swaptotal, swapused, swapfree = su_values
 
     # swap set
-    meminfo.swaptotal = swaptotal or 1_000_000
-    meminfo.swapused  = swapused or    500_000
-    meminfo.swapfree  = swapfree or    500_000
+    meminfo.swaptotal = swaptotal # or 1_000_000  # add these to test swap
+    meminfo.swapused  = swapused  # or   600_000
+    meminfo.swapfree  = swapfree  # or   400_000
     meminfo.swapcached = 1
 
     # ~ meminfo.swapused = (meminfo.swaptotal - meminfo.swapcached -

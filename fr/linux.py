@@ -81,6 +81,11 @@ def check_removable(dev):
         #~ if opts.debug: print('ERROR:', err)
 
 
+def get_label_map(opts):
+    ''' TODO move that below to function. '''
+    pass
+
+
 def get_diskinfo(opts, show_all=False, local_only=False):
     ''' Returns a list holding the current disk info.
         Stats are divided by the outputunit.
