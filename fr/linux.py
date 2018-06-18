@@ -9,16 +9,16 @@ from fr.utils import DiskInfo, MemInfo  #, run
 
 
 diskdir     = '/dev/disk/by-label'
+encoding    = 'utf8'
 memfname    = '/proc/meminfo'
 mntfname    = '/proc/mounts'
 optical_fs  = ('iso9660', 'udf')
 selectors   = ('/', 'tmpfs', ':')
+col_lbls    = 'MNT CACHE'
+col_lblw    = 'MOUNT CACHE'
 coloravail  = True
 hicolor     = None
 boldbar     = None
-encoding    = 'utf8'
-col_lblw    = 'MOUNT CACHE'
-col_lbls    = 'MNT CACHE'
 TERM        = os.environ.get('TERM')
 out         = sys.stdout.write
 locale.setlocale(locale.LC_ALL, '')

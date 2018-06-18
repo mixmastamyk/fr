@@ -41,7 +41,7 @@ def load_config(options):
             globals()[pvar] = getattr(pform, pvar)
 
 
-def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0):
+def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0, end=' '):
     ''' Formats, justifies, and returns a given string according to
         specifications.
     '''
@@ -53,12 +53,13 @@ def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0):
 
     value = f'{text:{align}{colwidth}}'
     if opts.incolor and colorstr:
-        return colorstr % value
+        return colorstr % value + end
     else:
-        return value
+        return value + end
 
 
-def fmtval(value, colorstr=None, precision=None, spacing=True, trunc=True):
+def fmtval(value, colorstr=None, precision=None, spacing=True, trunc=True,
+           end=' '):
     ''' Formats and returns a given number according to specifications. '''
     colwidth = opts.colwidth
     # get precision
@@ -78,9 +79,9 @@ def fmtval(value, colorstr=None, precision=None, spacing=True, trunc=True):
 
     # Add color if needed
     if opts.incolor and colorstr:
-        return colorstr % result
+        return colorstr % result + end
     else:
-        return result
+        return result + end
 
 
 def get_units(unit, binary=False):
@@ -174,20 +175,19 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         mntp = mntp.rstrip()  # prevent wrap
 
         if widelayout:
-            out(fmtstr(ico + sep + disk.dev, align='<') + sep)
-            out(fmtstr(disk.label, align='<') + sep)
+            out(fmtstr(ico + sep + disk.dev, align='<'))
+            out(fmtstr(disk.label, align='<'))
             if disk.cap:
                 if disk.rw:
-                    out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
+                    out(f'{fmtval(disk.cap)}{fmtval(disk.used, lblcolor)}')
                     out(fmtval(disk.free, lblcolor))
                 else:
-                    out(f'{fmtval(disk.cap)} {fmtstr()} ')
+                    out(f'{fmtval(disk.cap)}{fmtstr()}')
                     out(fmtstr(_emptico, ansi.fdimbb))
             else:
                 out(fmtstr(_emptico, ansi.fdimbb))
 
             if disk.cap:
-                out(sep)
                 if disk.rw:  # factoring this caused colored brackets
                     ansi.rainbar(data, gwidth, incolor,
                                  hicolor=opts.hicolor,
@@ -200,10 +200,10 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 out(sep + mntp)
             print()
         else:
-            out(fmtstr(f'{ico} {disk.dev}', align="<") + sep)
+            out(fmtstr(f'{ico} {disk.dev}', align="<"))
             out(fmtstr(disk.label, align='<'))
             if disk.cap:
-                out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
+                out(f'{fmtval(disk.cap)}{fmtval(disk.used, lblcolor)}')
                 out(fmtval(disk.free, lblcolor))
             else:
                 out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
@@ -263,22 +263,22 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, frep, None,  None, False),               # free
     )
     if widelayout:
-        out(fmtstr(_ramico + ' RAM', align='<') + sep)
-        out(fmtstr(sep) + sep)  # volume column
-        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} ')
-        out(fmtval(free, rlblcolor) + sep)
+        out(fmtstr(_ramico + ' RAM', align='<'))
+        out(fmtstr(sep))  # volume column
+        out(f'{fmtval(totl)}{fmtval(used, rlblcolor)}')
+        out(fmtval(free, rlblcolor))
 
         # print graph
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
         print('', fmtval(cach, swap_color))
     else:
-        out(f'{fmtstr(_ramico + " RAM", align="<")} {fmtstr()} ')
-        out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
+        out(f'{fmtstr(_ramico + " RAM", align="<")}{fmtstr()}')
+        out(f'{fmtval(totl)}{fmtval(used, rlblcolor)}{fmtval(free, rlblcolor)}')
         print(sep, fmtval(cach, swap_color))
 
         # print graph
-        out(fmtstr(sep)) # one space
+        out(fmtstr())
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
         print() # extra line in narrow layout
@@ -290,11 +290,11 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, swfp, None,  None, False),           # free
     )
     if widelayout:
-        out(fmtstr(_diskico + ' SWAP', align='<') + sep)
-        out(fmtstr(sep) + sep)
+        out(fmtstr(_diskico + ' SWAP', align='<'))
+        out(fmtstr())  # label placeholder
         if swpt:
-            out(fmtval(swpt) + sep)
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
+            out(fmtval(swpt))
+            out(f'{fmtval(swpu, slblcolor)}{fmtval(swpf, slblcolor)}')
         else:
             print(fmtstr(_emptico, ansi.fdimbb))
 
@@ -307,27 +307,28 @@ def print_meminfo(meminfo, widelayout, incolor):
             print()
     else:
         out(fmtstr(_diskico + ' SWAP', align='<'))
+        out(fmtstr())  # label placeholder
         if swpt:
-            out(f'{fmtstr(sep)} {fmtval(swpt)} ')
-            out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
+            out(f'{fmtstr()}{fmtval(swpt)}')
+            out(f'{fmtval(swpu, slblcolor)}{fmtval(swpf, slblcolor)}')
             if swpc:
                 out('  ' + fmtval(swpc, swap_color))
             print()
 
             # print graph
-            out(fmtstr(sep))  # one space
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             print()
         else:
             print(fmtstr(_emptico, ansi.fdimbb))
         print()
-    print() # extra newline that separates mem and disk sections
+
+    print()  # extra newline separates mem and disk sections
 
 
 
 def truncstr(text, width, align='right'):
-    ''' Truncate a string, ending in ellipsis when chopped. '''
+    ''' Truncate a string, with trailing ellipsis. '''
     before = after = ''
     if align == 'left':
         truncated = text[-width+1:]

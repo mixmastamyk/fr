@@ -7,8 +7,8 @@
         - dark grey color is very black and hard to see.
         - get volume names
 '''
-import os, locale, re
-from os.path import basename, join
+import os, locale
+from os.path import basename
 from fr.utils import DiskInfo, MemInfo, run
 
 diskdir     = '/Volumes'
@@ -41,10 +41,7 @@ def get_label_map(opts):
         for entry in os.scandir(diskdir):
             if entry.name.startswith('.'):
                 continue
-            # ~ target = normpath(join(diskdir, os.readlink(entry.path)))
             target = os.readlink(entry.path)
-            # ~ decoded_name = entry.name #.encode('utf8').decode('unicode_escape')
-            # ~ label_map[target] = decoded_name
             label_map[target] = entry.name
         if opts.debug:
             print('\n\nlabel_map:', label_map)

@@ -129,7 +129,6 @@ def main(opts):
     longestpth = opts.colwidth + 1     # extra space
     widelayout = opts.termcols > 89
     numcols    = 6                     # data columns, w/o graph
-    sep        = ' '
 
     fr.load_config(opts)
     pform = opts.pform
@@ -173,11 +172,11 @@ def main(opts):
 
     # Headers
     print()
-    out(fmtstr('DEVICE', align='<') + sep)
-    out(fmtstr('VOLUME', align='<') + sep)
-    out(fmtstr('CAPACITY') + sep)
+    out(fmtstr('DEVICE', align='<'))
+    out(fmtstr('VOLUME', align='<'))
+    out(fmtstr('CAPACITY'))
     for header in ['USED', 'FREE']:
-        out(fmtstr(header) + sep)
+        out(fmtstr(header))
 
     if widelayout:
         if ' ' in pform.col_lblw:   # figure expanding label (on posix)
@@ -187,7 +186,7 @@ def main(opts):
             lbl = ''.join(lbl)
         else:
             lbl = pform.col_lblw    # win
-        out(f'{sep * opts.width} {fmtstr(lbl)}')
+        out(f'{" " * opts.width} {fmtstr(lbl)}')
     else:
         out('  ' + fmtstr(pform.col_lbls))
 
