@@ -99,9 +99,6 @@ or a user install, but need to add the install folder to your PATH::
 
     pip3 install --user fr[win]
 
-I've given up on Unicode icons (for now) on the Windows console and went back
-to ASCII.
-Perhaps it should print out "conventional/high" memory too.
 
 |
 
@@ -129,6 +126,10 @@ Both Windows and Mac OS are not currently able to detect optical or network
 drives.
 The port to Python 3 seems to have broken Windows in that regard,
 which used to work.
+
+I've given up on Unicode icons (for now) on the Windows console and went back
+to ASCII.
+Perhaps it should print out "conventional/high" memory too.
 
 The Linux console (the real boot up console, pre-X) has a limited character set
 and therefore uses ASCII as well.
