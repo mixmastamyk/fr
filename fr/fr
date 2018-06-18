@@ -126,10 +126,10 @@ def setup():
 
 def main(opts):
     ''' Let's get it on... '''
-    longestpth  = opts.colwidth + 1     # extra space
-    widelayout  = opts.termcols > 89
-    numcols     = 6                     # data columns, w/o graph
-    sep         = ' '
+    longestpth = opts.colwidth + 1     # extra space
+    widelayout = opts.termcols > 89
+    numcols    = 6                     # data columns, w/o graph
+    sep        = ' '
 
     fr.load_config(opts)
     pform = opts.pform
@@ -185,11 +185,9 @@ def main(opts):
             while len(lbl) < opts.colwidth:
                 lbl.insert(5, ' ')
             lbl = ''.join(lbl)
-            extspace = 0
         else:
             lbl = pform.col_lblw    # win
-            extspace = 0
-        out(f'{sep * (opts.width + extspace)} {fmtstr(lbl)}')
+        out(f'{sep * opts.width} {fmtstr(lbl)}')
     else:
         out('  ' + fmtstr(pform.col_lbls))
 
