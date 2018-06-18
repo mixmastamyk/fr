@@ -3,23 +3,24 @@
     derived from linux.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 
+    Data gathering routines located here.
+
     TODO:
-        - dark grey color is very black and hard to see.
-        - get volume names
+        - dark grey color is black and very hard to see.
 '''
 import os, locale
 from os.path import basename
 from fr.utils import DiskInfo, MemInfo, run
 
-diskdir     = '/Volumes'
 devfilter   = (b'devfs', b'map')
 diskcmd     = '/bin/df -k'
+diskdir     = '/Volumes'
+encoding    = 'utf8'
+col_lbls    = 'MNT CACHE'
+col_lblw    = 'MOUNT CACHE'
 coloravail  = True
 hicolor     = None
 boldbar     = None
-encoding    = 'utf8'
-col_lblw    = 'MOUNT CACHE'
-col_lbls    = 'MNT CACHE'
 TERM        = os.environ.get('TERM')
 
 if TERM == 'xterm-256color':

@@ -4,6 +4,7 @@
 '''
 import sys
 
+
 out = sys.stdout.write
 if sys.platform[:3] == 'win':  # don't bypass streams :-(
     def out(*args, end=''):
@@ -199,7 +200,7 @@ def get_color_index(pos, offset, maxwidth, plen):
 
 def rainbar(data, maxwidth, incolor=True, hicolor=True,
             cbrackets=('\u2595', '\u258F')):
-    ''' Creates a "rainbar" graph. '''
+    ''' Creates a "rainbar" style graph. '''
     if not data: return             # Nada to do
     datalen = len(data)
     endpcnt = data[-1][1] # * 100
@@ -213,7 +214,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
     position = 0
 
     # Print left bracket in correct color:
-    if cbrackets and incolor:
+    if incolor:
         out((csi % pal[0]) + cbrackets[0])  # start bracket
     else:
         out(cbrackets[0])
@@ -255,7 +256,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
                 out(chr(8) + ' ' + chr(8))  # backspace
 
     # Print right bracket in correct color:
-    if cbrackets and incolor:
+    if incolor:
         lastcolor = darkred if (hicolor and endpcnt > 1) else pal[-1]
         out((csi % lastcolor) + cbrackets[1])    # end bracket
         colorend()

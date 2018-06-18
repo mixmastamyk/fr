@@ -2,15 +2,6 @@
 import os
 #~ from distutils.core import setup
 from setuptools import setup
-#~ # grab metadata
-#~ version = '1.00'
-#~ with open('fr/fr') as f:
-    #~ for line in f:
-        #~ if line.lstrip().startswith('__version__'):
-            #~ try:
-                #~ version = line.split("'")[1]
-            #~ except IndexError:  pass
-            #~ break
 from fr.meta import (pkgname, version, email, license, authors, description,
                      repo_url)
 

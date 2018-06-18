@@ -2,10 +2,11 @@
     linux.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
 
+    Data gathering routines located here.
 '''
 import sys, os, locale
 from os.path import basename, join, normpath
-from fr.utils import DiskInfo, MemInfo  #, run
+from fr.utils import DiskInfo, MemInfo
 
 
 diskdir     = '/dev/disk/by-label'
@@ -23,11 +24,12 @@ TERM        = os.environ.get('TERM')
 out         = sys.stdout.write
 locale.setlocale(locale.LC_ALL, '')
 
+
 if TERM == 'linux':             # Basic Linux console, use ascii
     hicolor     = False
     boldbar     = True
-    _brckico    = ('[', ']')
-    _cmonico    = '|'  # '='
+    _brckico    = ('|', '|')
+    _cmonico    = '/'
     _discico    = 'o'
     _diskico    = 'd'
     _ellpico    = '~'

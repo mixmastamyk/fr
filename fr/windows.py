@@ -1,6 +1,8 @@
 '''
     windows.py - (C) 2012-18, Mike Miller
     License: GPLv3+.
+
+    Data gathering routines located here.
 '''
 import sys
 import os
@@ -17,14 +19,14 @@ try:
 except ImportError:
     sys.exit('Error: winstats module not found.  C:\> pip3 install winstats')
 
-
 # icons and graphics chars?
+locale.setlocale(locale.LC_NUMERIC, '')
 #~ locale.setlocale(locale.LC_ALL, ('english_united-states', '437'))
 #~ os_encoding = locale.getpreferredencoding()
 #~ print('\n***********  encoding:', os_encoding)  # cp1252
 
 # pkg below seems to work, but most chars not available under win7 fonts
-#~ import win_unicode_console
+#~ import win_unicode_console       # must go before colorama
 #~ win_unicode_console.enable()
 #~ win_unicode_console.disable()
 try:
@@ -34,21 +36,13 @@ try:
 except ImportError:
     coloravail = False
 
-# ascii  :-/
-_brckico = ('|', '|')
-_cmonico = '='
-_discico = 'o'
-_diskico = 'd'
-_ellpico = '~'
-_emptico = '0'
-_freeico = '-'
-_gearico = 's'
-_imgico  = 'i'
-_netwico = 'n'
-_ramico  = 'r'
-_remvico = '>'
-_unmnico = 'u'
-_usedico = '#'
+version = platform.win32_ver()[1]
+win7ver = '6.1.7600'
+vistver = '6.0.6000'
+hicolor  = False
+boldbar  = True
+col_lblw = 'CACHE'
+col_lbls = 'CACHE'
 
 # cp 437, doesn't work any more.  :-/
 # cp 1252 - blah
@@ -66,16 +60,27 @@ _usedico = '#'
 #~ _unmnico = '\7f'        # empty house
 #~ _usedico = '\xfe'       # block
 
+# ascii  :-/
+_brckico = ('|', '|')
+_cmonico = '/'
+_discico = 'o'
+_diskico = 'd'
+_ellpico = '~'
+_emptico = '0'
+_freeico = '-'
+_gearico = 's'
+_imgico  = 'i'
+_netwico = 'n'
+_ramico  = 'r'
+_remvico = '>'
+_unmnico = 'u'
+_usedico = '#'
 
-locale.setlocale(locale.LC_NUMERIC, '')
-version = platform.win32_ver()[1]
-win7ver = '6.1.7600'
-vistver = '6.0.6000'
-
-hicolor  = False
-boldbar  = True
-col_lblw = 'CACHE'
-col_lbls = 'CACHE'
+try:
+    os.EX_OK
+except AttributeError:  # set exit codes
+    os.EX_OK = 0
+    os.EX_IOERROR = 74
 
 _drive_type_result = {
     0: ('unk', None),       # UNKNOWN
@@ -86,12 +91,6 @@ _drive_type_result = {
     5: ('isopt', True),     # CDROM
     6: ('isram', True),     # RAMDISK
 }
-
-try:
-    os.EX_OK
-except AttributeError:  # set exit codes
-    os.EX_OK = 0
-    os.EX_IOERROR = 74
 
 
 class ColorNotAvail(Exception):
@@ -154,7 +153,8 @@ def get_meminfo(opts):
     mstat = get_mem_info()  # from winstats
     pinf = get_perf_info()
     try:
-        pgpcnt = get_perf_data(r'\Paging File(_Total)\% Usage', 'double')[0] / 100
+        pgpcnt = get_perf_data(r'\Paging File(_Total)\% Usage',
+                                'double')[0] / 100
     except WindowsError:
         pgpcnt = 0
 

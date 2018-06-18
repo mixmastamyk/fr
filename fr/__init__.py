@@ -1,3 +1,9 @@
+'''
+    fr - (C) 2012-18, Mike Miller
+    License: GPLv3+.
+
+    Output routines located here.
+'''
 import sys
 import locale
 
@@ -35,10 +41,11 @@ def load_config(options):
     global opts, pform
     opts = options
     pform = options.pform
+    global_ns = globals()
 
-    for pvar in dir(pform):
-        if pvar.startswith('_') and pvar.endswith('ico'):
-            globals()[pvar] = getattr(pform, pvar)
+    for varname in dir(pform):  # load icons into module namespace
+        if varname.startswith('_') and varname.endswith('ico'):
+            global_ns[varname] = getattr(pform, varname)
 
 
 def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0, end=' '):
@@ -122,7 +129,7 @@ def get_units(unit, binary=False):
             result = 1000000000000, 'Terabyte'
 
     if not result:
-        print('Warning: incorrect parameter: %s.' % unit)
+        print(f'Warning: incorrect parameter: {unit}.')
         result = _outunit
 
     if opts.precision == -1:  # auto
@@ -145,7 +152,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.isnet:      ico = _netwico
         if disk.isram:      ico = _ramico
         if disk.isimg:      ico = _imgico
-        if disk.mntp == '/boot/efi':    # TODO mv this icon setting to pform
+        if disk.mntp == '/boot/efi':
                             ico = _gearico
 
         if opts.relative and disk.ocap and disk.ocap != base:
@@ -160,7 +167,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         else:
             ffg = ufg = ansi.dimbb  # dim or dark grey
 
-        if disk.cap and disk.rw:
+        cap = disk.cap
+        if cap and disk.rw:
             lblcolor = ansi.get_label_tmpl(disk.pcnt, opts.width, opts.hicolor)
         else:
             lblcolor = None
@@ -179,8 +187,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 fmtstr(ico + sep + disk.dev, align='<') +
                 fmtstr(disk.label, align='<')
             )
-            if disk.cap:
-                out(fmtval(disk.cap))
+            if cap:
+                out(fmtval(cap))
                 if disk.rw:
                     out(
                         fmtval(disk.used, lblcolor) +
@@ -194,7 +202,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             else:
                 out(fmtstr(_emptico, ansi.fdimbb))
 
-            if disk.cap:
+            if cap:
                 if disk.rw:  # factoring this caused colored brackets
                     ansi.rainbar(data, gwidth, incolor,
                                  hicolor=opts.hicolor,
@@ -203,7 +211,6 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
 
                 if opts.relative and opts.width != gwidth:
-                    #~ out(sep * (opts.width - gwidth - 1))
                     out(sep * (opts.width - gwidth))
                 out(sep + mntp)
             print()
@@ -212,9 +219,9 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 fmtstr(ico + sep + disk.dev, align="<") +
                 fmtstr(disk.label, align='<')
             )
-            if disk.cap:
+            if cap:
                 out(
-                    fmtval(disk.cap) +
+                    fmtval(cap) +
                     fmtval(disk.used, lblcolor) +
                     fmtval(disk.free, lblcolor)
                 )
@@ -222,7 +229,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 out(fmtstr(_emptico, ansi.fdimbb) + fmtstr() + fmtstr())
             print(sep, mntp)
 
-            if disk.cap:
+            if cap:
                 out(fmtstr())
                 if disk.rw:
                     ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,

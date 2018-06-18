@@ -17,7 +17,7 @@ Instead of this::
     -/+ buffers/cache:    1024416    3020800
     Swap:            0          0          0
 
-You'll see something like this::
+You'll see something more like this::
 
     Free Resources in Blocks of 1 Megabyte (1,000,000 bytes)
 
@@ -30,18 +30,13 @@ You'll see something like this::
     ◗ sr0    PREDATOR    45,206     45,206          0  ▉▉▉▉▉▉▉▉▉▉▉▉▉▏ /media/PREDATOR
 
 
-... in fruity colors if you so choose.
+... in fruity colors,
+if you so choose.
 Yes,
 color can be turned off,
 units chosen,
 network mounts filtered,
-etc etc.
-Version 3.x of ``fr`` has been tested on
-Ubuntu 18.04 Bionic "Tch-tch-tch-tch…",
-Windows 7,
-and
-Mac OS X (10.11)
-so far.
+etc, etc.
 
 
 .. note::
@@ -52,11 +47,18 @@ so far.
     try ``fr`` 1.x,
     which supports Python 2.7.
 
+    ``fr`` has been tested on
+    Ubuntu 18.04 Bionic "Tch-tch-tch-tch…",
+    Windows 7,
+    and
+    Mac OS X (10.11)
+    so far.
 
-.. raw:: html
 
-   <hr width=50 size=10>
-   <b>Works?</b>
+.. ~ .. raw:: html
+
+   .. ~ <hr width=50 size=10>
+   .. ~ <b>Works?</b>
 
 
 
@@ -71,31 +73,31 @@ As of ``fr`` version 3.x,
 Dbus and Udisks are no longer required or used on Linux.
 Rather,
 data is read from the
-``/proc``, ``/dev``, and potentially the ``/sys``
+``/proc``, ``/dev``, and potentially ``/sys``
 filesystems.
 
-To install as root::
+To install system-wide as root::
 
-    sudo -H pip3 install --user fr  # system wide, or
+    sudo -H pip3 install --user fr
 
-Per user::
+Per user (add ``/home/$USER/.local/bin`` to ``PATH``)::
 
-    pip3 install --user fr          # user install, add to PATH:
-                                    # /home/$USER/.local/bin
+    pip3 install --user fr
+
 
 |
 
 Windows
 ~~~~~~~~~
 
-Support still experimental.
+Support is still experimental.
 Could use some help as Win7 in a VM is all I have access to these days.
 
 Run as Admin::
 
-    pip3 install fr[win]            # installs winstats, colorama
+    pip3 install fr[win]    # installs winstats, colorama
 
-or a user install, but need to add the install folder to your PATH::
+or a user install, but need to add the install folder to ``PATH``::
 
     pip3 install --user fr[win]
 
@@ -122,8 +124,8 @@ hoping there are better options?
 Limitations
 ~~~~~~~~~~~~~
 
-Both Windows and Mac OS are not currently able to detect optical or network
-drives.
+Both Windows and Mac OS are not currently able to detect whether drives are
+optical or network.
 The port to Python 3 seems to have broken Windows in that regard,
 which used to work.
 
@@ -131,8 +133,8 @@ I've given up on Unicode icons (for now) on the Windows console and went back
 to ASCII.
 Perhaps it should print out "conventional/high" memory too.
 
-The Linux console (the real boot up console, pre-X) has a limited character set
-and therefore uses ASCII as well.
+The Linux console (the real boot up console, pre-X) has a very limited
+character set and therefore uses ASCII as well.
 
 
 Use
@@ -144,14 +146,18 @@ Run it ;)
 
     fr
 
-And of course there are a number of options which are spit out when this is
-typed::
+And of course there are a number of options,
+spit out when this is typed::
 
     fr -h
 
-Note:  Output will be in a compact format when the width of the
-terminal/console is under 90 characters.
-Give it more and it will expand to fill available space.
+
+.. note::
+
+    Output will be in a compact format when the width of the
+    terminal/console is under 90 characters.
+    Give it more and it will expand to fill available space.
+
 
 |
 

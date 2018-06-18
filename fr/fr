@@ -187,13 +187,13 @@ def main(opts):
                 lbl.insert(5, ' ')
             lbl = ''.join(lbl)
         else:
-            lbl = pform.col_lblw    # win
+            lbl = pform.col_lblw    # windows
         out(' ' * (opts.width + 1) + fmtstr(lbl))
     else:
         out(' ' + fmtstr(pform.col_lbls))
 
     print()
-    print_meminfo(meminfo, widelayout, opts.incolor)  # TODO print one at time?
+    print_meminfo(meminfo, widelayout, opts.incolor)
     print_diskinfo(diskinfo, widelayout, opts.incolor)
 
     return os.EX_OK
