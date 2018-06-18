@@ -38,8 +38,7 @@ if True:  # foldable init
     underline   = 4
     reverse     = 7
     strike      = 9
-    dimbb       = '%s;%s' % (bold, black) # works in more places
-
+    dimbb       = '%s;%s' % (bold, black)  # works in more places
 
     # A list of ansi escape sequences.
     fred        = '[00;31m%s[00m'
@@ -74,34 +73,35 @@ if True:  # foldable init
     redprompt    = '\001[01;31m\002%s\001[00m\002'
 
     # 256...
-    darkred = 52
 
     # 256 color support
-    csi8 = '\x1b[0;38;5;%03dm'
-    csi8b = '\x1b[1;38;5;%03dm'
-    csi8_blk = csi8b + '%%s\x1b[0m'
-    grn8 = 34
-    grnyl8 = 76
-    yell8 = 184
-    orng8 = 172
-    orngrd8 = 166
-    red8 = 160
-    blu8 = 27
+    csi8        = '\x1b[0;38;5;%03dm'
+    csi8b       = '\x1b[1;38;5;%03dm'
+    csi8_blk    = csi8b + '%%s\x1b[0m'
+    blu8        = 27
+    darkred     = 52
+    grn8        = 34
+    grnyl8      = 76
+    orng8       = 172
+    orngrd8     = 166
+    red8        = 160
+    yell8       = 184
+
     pal8 = [grn8, grn8, grn8, grn8, grn8, grnyl8, yell8, orng8, orngrd8, red8]
     map8 = { blue: blu8, red: red8, green: grn8, dim: dim }
     rst8 = grn8
 
     # 16 colors
-    csi4 = '\x1b[0;%sm'
-    csi4b = '\x1b[1;%sm'
-    csi4_blk = csi4b + '%%s\x1b[0m'
-    yel = yellow
-    pal4 = [green, green, green, green, green, yel, yel, yel, yel, red]
-    rst4 = green
+    csi4        = '\x1b[0;%sm'
+    csi4b       = '\x1b[1;%sm'
+    csi4_blk    = csi4b + '%%s\x1b[0m'
+    yel         = yellow
+    pal4        = [green, green, green, green, green, yel, yel, yel, yel, red]
+    rst4        = green
 
 
 def colorstart(fgcolor, bgcolor, weight):
-    '''Begin a text style.'''
+    ''' Begin a text style. '''
     if weight:          weight = bold
     else:               weight = norm
     if bgcolor:
@@ -111,11 +111,11 @@ def colorstart(fgcolor, bgcolor, weight):
 
 
 def colorend(cr=False):
-    '''End color styles.  Resets to default terminal colors.'''
-    out('[0m')
+    ''' End color styles.  Resets to default terminal colors. '''
     if cr:
-        out('\n')
-    sys.stdout.flush()
+        out('[0m\n')
+    else:
+        out('[0m')
 
 
 def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
@@ -127,8 +127,8 @@ def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
     colorend(cr)
 
 
-def bargraph(data, maxwidth, incolor=True, cbrackets=(u'\u2595', u'\u258F')):
-    'Creates a bar graph.'
+def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
+    ''' Creates a bar graph. '''
     threshold = 100.0 // (maxwidth * 2)  # if smaller than 1/2 of one char wide
     position = 0
     begpcnt = data[0][1] * 100
@@ -198,8 +198,8 @@ def get_color_index(pos, offset, maxwidth, plen):
 
 
 def rainbar(data, maxwidth, incolor=True, hicolor=True,
-            cbrackets=(u'\u2595', u'\u258F')):
-    'Creates a "rainbar" graph.'
+            cbrackets=('\u2595', '\u258F')):
+    ''' Creates a "rainbar" graph. '''
     if not data: return             # Nada to do
     datalen = len(data)
     endpcnt = data[-1][1] # * 100
@@ -232,7 +232,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
 
         if incolor:
             for j in range(width):
-                # faster:
+                # faster?
                 colorind = fgcolor or min(int((j+offset)/bucket), (plen-1))
                 #~ colorind = fgcolor or get_color_index(j, offset, maxwidth, plen)
                 if colorind == lastind:
