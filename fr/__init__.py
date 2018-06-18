@@ -41,15 +41,11 @@ def load_config(options):
             globals()[pvar] = getattr(pform, pvar)
 
 
-def fmtstr(text='', colorstr=None, leftjust=False, trunc=True, width=0):
+def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0):
     ''' Formats, justifies, and returns a given string according to
         specifications.
     '''
     colwidth = width or opts.colwidth
-    if leftjust:  # TODO rename
-        align = ''
-    else:
-        align = '>'
 
     if trunc:
         if len(text) > colwidth:
@@ -173,13 +169,13 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar), # Used
             (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
         )
-        mntp = fmtstr(disk.mntp, leftjust=True, trunc='left',
+        mntp = fmtstr(disk.mntp, align='<', trunc='left',
                       width=(opts.colwidth * 2) + 2)
         mntp = mntp.rstrip()  # prevent wrap
 
         if widelayout:
-            out(fmtstr(ico + sep + disk.dev, leftjust=True) + sep)
-            out(fmtstr(disk.label, leftjust=True) + sep)
+            out(fmtstr(ico + sep + disk.dev, align='<') + sep)
+            out(fmtstr(disk.label, align='<') + sep)
             if disk.cap:
                 if disk.rw:
                     out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
@@ -204,8 +200,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 out(sep + mntp)
             print()
         else:
-            out(fmtstr(f'{ico} {disk.dev}', leftjust=True) + sep)
-            out(fmtstr(disk.label, leftjust=True))
+            out(fmtstr(f'{ico} {disk.dev}', align="<") + sep)
+            out(fmtstr(disk.label, align='<'))
             if disk.cap:
                 out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
                 out(fmtval(disk.free, lblcolor))
@@ -267,7 +263,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, frep, None,  None, False),               # free
     )
     if widelayout:
-        out(fmtstr(_ramico + ' RAM', leftjust=True) + sep)
+        out(fmtstr(_ramico + ' RAM', align='<') + sep)
         out(fmtstr(sep) + sep)  # volume column
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} ')
         out(fmtval(free, rlblcolor) + sep)
@@ -277,7 +273,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                      cbrackets=_brckico)
         print('', fmtval(cach, swap_color))
     else:
-        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()} ')
+        out(f'{fmtstr(_ramico + " RAM", align="<")} {fmtstr()} ')
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
         print(sep, fmtval(cach, swap_color))
 
@@ -294,7 +290,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, swfp, None,  None, False),           # free
     )
     if widelayout:
-        out(fmtstr(_diskico + ' SWAP', leftjust=True) + sep)
+        out(fmtstr(_diskico + ' SWAP', align='<') + sep)
         out(fmtstr(sep) + sep)
         if swpt:
             out(fmtval(swpt) + sep)
@@ -310,7 +306,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                 out(' ' + fmtval(swpc, swap_color))
             print()
     else:
-        out(fmtstr(_diskico + ' SWAP', leftjust=True))
+        out(fmtstr(_diskico + ' SWAP', align='<'))
         if swpt:
             out(f'{fmtstr(sep)} {fmtval(swpt)} ')
             out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')

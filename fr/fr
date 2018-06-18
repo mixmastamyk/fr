@@ -173,8 +173,8 @@ def main(opts):
 
     # Headers
     print()
-    out(fmtstr('DEVICE', leftjust=True) + sep)
-    out(fmtstr('VOLUME', leftjust=True) + sep)
+    out(fmtstr('DEVICE', align='<') + sep)
+    out(fmtstr('VOLUME', align='<') + sep)
     out(fmtstr('CAPACITY') + sep)
     for header in ['USED', 'FREE']:
         out(fmtstr(header) + sep)
