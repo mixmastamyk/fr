@@ -11,6 +11,7 @@ if sys.platform[:3] == 'win':  # :-(
     def out(*args, end=''):
         print(*args, end=end)
 
+
 # default icons
 _ramico  = '⌁'
 _diskico = '▪'
@@ -40,23 +41,21 @@ def load_config(options):
             globals()[pvar] = getattr(pform, pvar)
 
 
-def fmtstr(text='', colorstr=None, leftjust=False, trunc=True):
+def fmtstr(text='', colorstr=None, leftjust=False, trunc=True, width=0):
     ''' Formats, justifies, and returns a given string according to
         specifications.
     '''
-    colwidth = opts.colwidth
-    if leftjust:
-        width = -colwidth
+    colwidth = width or opts.colwidth
+    if leftjust:  # TODO rename
+        align = ''
     else:
-        width =  colwidth
+        align = '>'
 
     if trunc:
-        #~ cwd = (colwidth * 2) if trunc == 'left' and plat != 'win' else colwidth
-        cwd = (colwidth * 2) if trunc == 'left' else colwidth
-        if len(text) > cwd:
-            text = truncstr(text, cwd, align=trunc)  # truncate w/ellipsis
+        if len(text) > colwidth:
+            text = truncstr(text, colwidth, align=trunc)  # truncate w/ellipsis
 
-    value = '%%%ss' % width % text
+    value = f'{text:{align}{colwidth}}'
     if opts.incolor and colorstr:
         return colorstr % value
     else:
@@ -97,7 +96,7 @@ def get_units(unit, binary=False):
     if unit == 'b':
         result = 1, 'Byte'
 
-    elif binary:  # 2^X
+    elif binary:    # 2^X
         if   unit == 'k':
             result = 1024, 'Kibibyte'
         elif unit == 'm':
@@ -111,7 +110,7 @@ def get_units(unit, binary=False):
                 opts.precision = 3
             result = 1099511627776, 'Tebibyte'
 
-    else:  #  10^x
+    else:           #  10^x
         if   unit == 'k':
             result = 1000, 'Kilobyte'
         elif unit == 'm':
@@ -149,7 +148,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.isnet:      ico = _netwico
         if disk.isram:      ico = _ramico
         if disk.isimg:      ico = _imgico
-        if disk.mntp == '/boot/efi':  # TODO mv this icon setting to pform
+        if disk.mntp == '/boot/efi':    # TODO mv this icon setting to pform
                             ico = _gearico
 
         if opts.relative and disk.ocap and disk.ocap != base:
@@ -174,6 +173,10 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar), # Used
             (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
         )
+        mntp = fmtstr(disk.mntp, leftjust=True, trunc='left',
+                      width=(opts.colwidth * 2) + 2)
+        mntp = mntp.rstrip()  # prevent wrap
+
         if widelayout:
             out(fmtstr(ico + sep + disk.dev, leftjust=True) + sep)
             out(fmtstr(disk.label, leftjust=True) + sep)
@@ -188,7 +191,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 out(fmtstr(_emptico, ansi.fdimbb))
 
             if disk.cap:
-                out(' ')
+                out(sep)
                 if disk.rw:  # factoring this caused colored brackets
                     ansi.rainbar(data, gwidth, incolor,
                                  hicolor=opts.hicolor,
@@ -197,21 +200,21 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
 
                 if opts.relative and opts.width != gwidth:
-                    out(' ' * (opts.width - gwidth - 1))
-                out(f' {fmtstr(disk.mntp, leftjust=True, trunc="left")}')
+                    out(sep * (opts.width - gwidth - 1))
+                out(sep + mntp)
             print()
         else:
-            out(fmtstr(f'{ico} {disk.dev}', leftjust=True))
+            out(fmtstr(f'{ico} {disk.dev}', leftjust=True) + sep)
             out(fmtstr(disk.label, leftjust=True))
             if disk.cap:
-                out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)}')
+                out(f'{fmtval(disk.cap)} {fmtval(disk.used, lblcolor)} ')
                 out(fmtval(disk.free, lblcolor))
             else:
                 out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
-            print(' ', fmtstr(disk.mntp, leftjust=True, trunc=False))
+            print(sep, mntp)
 
             if disk.cap:
-                out(fmtstr(' '))
+                out(fmtstr(sep))
                 if disk.rw:
                     ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
                                  cbrackets=_brckico)
@@ -224,12 +227,12 @@ def print_diskinfo(diskinfo, widelayout, incolor):
 
 def print_meminfo(meminfo, widelayout, incolor):
     ''' Memory information output function. '''
+    sep = ' '
     # prep Mem numbers
     totl = meminfo.memtotal
     cach = meminfo.cached + meminfo.buffers
     free = meminfo.memfree
     used = meminfo.used
-    sep = ' '
     if opts.debug:
         print(f'\n  totl: {totl}, used: {used}, free: {free}, cach: {cach}\n')
 
@@ -265,7 +268,7 @@ def print_meminfo(meminfo, widelayout, incolor):
     )
     if widelayout:
         out(fmtstr(_ramico + ' RAM', leftjust=True) + sep)
-        out(fmtstr(' ') + sep)  # volume column
+        out(fmtstr(sep) + sep)  # volume column
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} ')
         out(fmtval(free, rlblcolor) + sep)
 
@@ -274,25 +277,25 @@ def print_meminfo(meminfo, widelayout, incolor):
                      cbrackets=_brckico)
         print('', fmtval(cach, swap_color))
     else:
-        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()}')
+        out(f'{fmtstr(_ramico + " RAM", leftjust=True)} {fmtstr()} ')
         out(f'{fmtval(totl)} {fmtval(used, rlblcolor)} {fmtval(free, rlblcolor)}')
-        print(' ', fmtval(cach, swap_color))
+        print(sep, fmtval(cach, swap_color))
 
         # print graph
-        out(fmtstr(' ')) # one space
+        out(fmtstr(sep)) # one space
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print('\n') # extra line in narrow layout
+        print() # extra line in narrow layout
 
     # Swap time:
     data = (
-        (_usedico, swup, None,  None, pform.boldbar),    # used
-        (_usedico, swcp, None,  None, pform.boldbar),    # cache
-        (_freeico, swfp, None,  None, False),    # free
+        (_usedico, swup, None,  None, pform.boldbar),   # used
+        (_usedico, swcp, None,  None, pform.boldbar),   # cache
+        (_freeico, swfp, None,  None, False),           # free
     )
     if widelayout:
         out(fmtstr(_diskico + ' SWAP', leftjust=True) + sep)
-        out(fmtstr(' ') + sep)
+        out(fmtstr(sep) + sep)
         if swpt:
             out(fmtval(swpt) + sep)
             out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
@@ -309,14 +312,14 @@ def print_meminfo(meminfo, widelayout, incolor):
     else:
         out(fmtstr(_diskico + ' SWAP', leftjust=True))
         if swpt:
-            out(f'{fmtstr(" ")} {fmtval(swpt)} ')
+            out(f'{fmtstr(sep)} {fmtval(swpt)} ')
             out(f'{fmtval(swpu, slblcolor)} {fmtval(swpf, slblcolor)} ')
             if swpc:
                 out('  ' + fmtval(swpc, swap_color))
             print()
 
             # print graph
-            out(fmtstr(' '))  # one space
+            out(fmtstr(sep))  # one space
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             print()
@@ -332,18 +335,12 @@ def truncstr(text, width, align='right'):
     before = after = ''
     if align == 'left':
         truncated = text[-width+1:]
-        # TODO move encoding
-        #~ before = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
         before = _ellpico
     elif align:
         truncated = text[:width-1]
-        # to pform module
-        #~ after = _ellpico.decode(pform.encoding) if plat == 'win' else _ellpico
         after = _ellpico
 
-    text = (before + truncated + after)
-    #~ if plat == 'win':
-        #~ text = text.encode(pform.encoding)  # :(
+    text = f'{before}{truncated}{after}'
     return text
 
 

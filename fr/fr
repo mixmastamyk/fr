@@ -71,7 +71,7 @@ def setup():
     opts = parser.parse_args()
 
     # discover environment
-    # get_terminal_size(), must be done before colorama to avoid crash on win
+    # get_terminal_size(), must be done before colorama to avoid crash
     opts.termcols, _ = shutil.get_terminal_size((80, 20))  # fallback
     isatty = hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno())
     if not isatty:  # must encode for file redirection
@@ -85,8 +85,7 @@ def setup():
         import fr.windows as pform
     elif plat == 'dar':
         import fr.darwin as pform
-    opts.pform = pform  # need to straighten this out
-    pform.opts = opts   # need to straighten this out
+    opts.pform = pform
 
     # expand colwidth if room, one column extra per ten over threshold
     opts.colwidth = _colwidth
@@ -166,7 +165,7 @@ def main(opts):
 
     if not opts.width:  # automatic width
         #         rm path col,   add space each, return path col, graph padding
-        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 2
+        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 4
         if widelayout:
             opts.width = opts.termcols - taken
         else:
@@ -189,7 +188,7 @@ def main(opts):
             extspace = 0
         else:
             lbl = pform.col_lblw    # win
-            extspace = 3
+            extspace = 0
         out(f'{sep * (opts.width + extspace)} {fmtstr(lbl)}')
     else:
         out('  ' + fmtstr(pform.col_lbls))

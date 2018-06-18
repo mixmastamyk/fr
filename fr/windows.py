@@ -26,7 +26,7 @@ except ImportError:
 # pkg below seems to work, but most chars not available under win7 fonts
 #~ import win_unicode_console
 #~ win_unicode_console.enable()
-# win_unicode_console.disable()
+#~ win_unicode_console.disable()
 try:
     import colorama
     colorama.init()
@@ -89,11 +89,9 @@ _drive_type_result = {
 
 try:
     os.EX_OK
-except AttributeError:
-    #~ Setting exit codes: OS OK, etc.
+except AttributeError:  # set exit codes
     os.EX_OK = 0
     os.EX_IOERROR = 74
-
 
 
 class ColorNotAvail(Exception):
@@ -108,7 +106,6 @@ def get_diskinfo(opts, show_all=False, local_only=False):
     ''' Returns a list holding the current disk info,
         stats divided by the ouptut unit.
     '''
-    #~ disks = {}
     disks = []
     outunit = opts.outunit
 
@@ -212,4 +209,3 @@ def get_meminfo(opts):
         print('AvailPageFile fixed:', fmt(swpf))
 
     return meminfo
-
