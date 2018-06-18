@@ -137,14 +137,16 @@ def main(opts):
     if opts.debug:
         print('opts:', opts)    # or will get clobbered by set
 
-    outunit_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False)
-    out(f'\nFree Resources in Blocks of 1 {unitstr} ({outunit_fmt} bytes)')
+    out_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False)
+    out(f'\nFree Resources in Blocks of 1 {unitstr} ({out_fmt} bytes)')
 
+    # get memory info
     meminfo = pform.get_meminfo(opts)
     if not meminfo:
         print(f'\nError: Could not read memory info @ {pform.memfname}.')
         sys.exit(os.EX_IOERR)
 
+    # get disk info
     diskinfo = pform.get_diskinfo(opts, local_only=opts.local,
                                   show_all=opts.all)
     if not diskinfo:
@@ -171,11 +173,11 @@ def main(opts):
             opts.width = 58
 
     # Headers
-    print()
-    out(fmtstr('DEVICE', align='<'))
-    out(fmtstr('VOLUME', align='<'))
-    out(fmtstr('CAPACITY'))
-    for header in ['USED', 'FREE']:
+    out('\n' +
+        fmtstr('DEVICE', align='<') +
+        fmtstr('VOLUME', align='<')
+    )
+    for header in ['CAPACITY', 'USED', 'FREE']:
         out(fmtstr(header))
 
     if widelayout:
@@ -186,12 +188,12 @@ def main(opts):
             lbl = ''.join(lbl)
         else:
             lbl = pform.col_lblw    # win
-        out(f'{" " * opts.width} {fmtstr(lbl)}')
+        out(' ' * (opts.width + 1) + fmtstr(lbl))
     else:
-        out('  ' + fmtstr(pform.col_lbls))
+        out(' ' + fmtstr(pform.col_lbls))
 
     print()
-    print_meminfo(meminfo, widelayout, opts.incolor)  # TODO print one at time
+    print_meminfo(meminfo, widelayout, opts.incolor)  # TODO print one at time?
     print_diskinfo(diskinfo, widelayout, opts.incolor)
 
     return os.EX_OK

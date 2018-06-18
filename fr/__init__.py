@@ -175,15 +175,22 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         mntp = mntp.rstrip()  # prevent wrap
 
         if widelayout:
-            out(fmtstr(ico + sep + disk.dev, align='<'))
-            out(fmtstr(disk.label, align='<'))
+            out(
+                fmtstr(ico + sep + disk.dev, align='<') +
+                fmtstr(disk.label, align='<')
+            )
             if disk.cap:
+                out(fmtval(disk.cap))
                 if disk.rw:
-                    out(f'{fmtval(disk.cap)}{fmtval(disk.used, lblcolor)}')
-                    out(fmtval(disk.free, lblcolor))
+                    out(
+                        fmtval(disk.used, lblcolor) +
+                        fmtval(disk.free, lblcolor)
+                    )
                 else:
-                    out(f'{fmtval(disk.cap)}{fmtstr()}')
-                    out(fmtstr(_emptico, ansi.fdimbb))
+                    out(
+                        fmtstr() +
+                        fmtstr(_emptico, ansi.fdimbb)
+                    )
             else:
                 out(fmtstr(_emptico, ansi.fdimbb))
 
@@ -196,21 +203,27 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     ansi.bargraph(data, gwidth, incolor, cbrackets=_brckico)
 
                 if opts.relative and opts.width != gwidth:
-                    out(sep * (opts.width - gwidth - 1))
+                    #~ out(sep * (opts.width - gwidth - 1))
+                    out(sep * (opts.width - gwidth))
                 out(sep + mntp)
             print()
         else:
-            out(fmtstr(f'{ico} {disk.dev}', align="<"))
-            out(fmtstr(disk.label, align='<'))
+            out(
+                fmtstr(ico + sep + disk.dev, align="<") +
+                fmtstr(disk.label, align='<')
+            )
             if disk.cap:
-                out(f'{fmtval(disk.cap)}{fmtval(disk.used, lblcolor)}')
-                out(fmtval(disk.free, lblcolor))
+                out(
+                    fmtval(disk.cap) +
+                    fmtval(disk.used, lblcolor) +
+                    fmtval(disk.free, lblcolor)
+                )
             else:
-                out(f'{fmtstr(_emptico, ansi.fdimbb)} {fmtstr()} {fmtstr()}')
+                out(fmtstr(_emptico, ansi.fdimbb) + fmtstr() + fmtstr())
             print(sep, mntp)
 
             if disk.cap:
-                out(fmtstr(sep))
+                out(fmtstr())
                 if disk.rw:
                     ansi.rainbar(data, gwidth, incolor, hicolor=opts.hicolor,
                                  cbrackets=_brckico)
@@ -263,25 +276,32 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, frep, None,  None, False),               # free
     )
     if widelayout:
-        out(fmtstr(_ramico + ' RAM', align='<'))
-        out(fmtstr(sep))  # volume column
-        out(f'{fmtval(totl)}{fmtval(used, rlblcolor)}')
-        out(fmtval(free, rlblcolor))
-
+        out(
+            fmtstr(_ramico + ' RAM', align='<') +
+            fmtstr() +                              # volume
+            fmtval(totl) +
+            fmtval(used, rlblcolor) +
+            fmtval(free, rlblcolor)
+        )
         # print graph
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
         print('', fmtval(cach, swap_color))
     else:
-        out(f'{fmtstr(_ramico + " RAM", align="<")}{fmtstr()}')
-        out(f'{fmtval(totl)}{fmtval(used, rlblcolor)}{fmtval(free, rlblcolor)}')
-        print(sep, fmtval(cach, swap_color))
-
+        out(
+            fmtstr(_ramico + ' RAM', align="<") +
+            fmtstr() +                              # volume
+            fmtval(totl) +
+            fmtval(used, rlblcolor) +
+            fmtval(free, rlblcolor) +
+            sep + sep +
+            fmtval(cach, swap_color) + '\n' +
+            fmtstr()                                # blank space
+        )
         # print graph
-        out(fmtstr())
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print() # extra line in narrow layout
+        print()                                     # extra line narrow layout
 
     # Swap time:
     data = (
@@ -290,11 +310,13 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, swfp, None,  None, False),           # free
     )
     if widelayout:
-        out(fmtstr(_diskico + ' SWAP', align='<'))
-        out(fmtstr())  # label placeholder
+        out(fmtstr(_diskico + ' SWAP', align='<') + fmtstr()) # label
         if swpt:
-            out(fmtval(swpt))
-            out(f'{fmtval(swpu, slblcolor)}{fmtval(swpf, slblcolor)}')
+            out(
+                fmtval(swpt) +
+                fmtval(swpu, slblcolor) +
+                fmtval(swpf, slblcolor)
+            )
         else:
             print(fmtstr(_emptico, ansi.fdimbb))
 
@@ -307,12 +329,15 @@ def print_meminfo(meminfo, widelayout, incolor):
             print()
     else:
         out(fmtstr(_diskico + ' SWAP', align='<'))
-        out(fmtstr())  # label placeholder
         if swpt:
-            out(f'{fmtstr()}{fmtval(swpt)}')
-            out(f'{fmtval(swpu, slblcolor)}{fmtval(swpf, slblcolor)}')
+            out(
+                fmtstr() +                              # label placeholder
+                fmtval(swpt) +
+                fmtval(swpu, slblcolor) +
+                fmtval(swpf, slblcolor)
+            )
             if swpc:
-                out('  ' + fmtval(swpc, swap_color))
+                out('  ' + fmtval(swpc, swap_color))    # ?
             print()
 
             # print graph
@@ -320,7 +345,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                          cbrackets=_brckico)
             print()
         else:
-            print(fmtstr(_emptico, ansi.fdimbb))
+            print(' ' + fmtstr(_emptico, ansi.fdimbb, align='<'))
         print()
 
     print()  # extra newline separates mem and disk sections
@@ -339,6 +364,3 @@ def truncstr(text, width, align='right'):
 
     text = f'{before}{truncated}{after}'
     return text
-
-
-
