@@ -27,7 +27,7 @@ if TERM == 'linux':             # Basic Linux console, use ascii
     hicolor     = False
     boldbar     = True
     _brckico    = ('[', ']')
-    _cmonico    = '='
+    _cmonico    = '|'  # '='
     _discico    = 'o'
     _diskico    = 'd'
     _ellpico    = '~'
@@ -37,7 +37,7 @@ if TERM == 'linux':             # Basic Linux console, use ascii
     _imgico     = 'i'
     _netwico    = 'n'
     _ramico     = 'r'
-    _remvico    = 'm'
+    _remvico    = '='
     _unmnico    = 'u'
     _usedico    = '#'
     _warnico    = '!'
