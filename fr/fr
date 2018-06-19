@@ -18,8 +18,7 @@ import sys
 import fr
 from fr import (fmtstr, fmtval, get_units, truncstr, print_meminfo,
                 print_diskinfo)
-
-__version__     = '3.00a0'
+from fr.meta import version
 
 # Set defaults
 _debug          = False
@@ -34,7 +33,7 @@ out             = sys.stdout.write
 
 
 def setup():
-    'Parse, interpret command line options, discover environment.'
+    ''' Parse, interpret command line options, discover environment. '''
     import shutil
     from argparse import ArgumentParser
     parser = ArgumentParser(usage=__doc__.rstrip())
@@ -65,8 +64,7 @@ def setup():
     parser.add_argument('--color', dest='incolor', metavar='...',
                         default=_incolor, choices=toggle_choices,
                         help='Color: (%s)' % ', '.join(toggle_choices))
-    parser.add_argument('--version', action='version',
-                        version=__version__)
+    parser.add_argument('--version', action='version', version=version)
 
     opts = parser.parse_args()
 

@@ -53,7 +53,7 @@ class MemInfo(Info):
         self.used       = None
 
 
-def run(cmd, shell=True, debug=False):
+def run(cmd, shell=False, debug=False):
     'Run a command and return the output.'
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=shell)
     (out, _) = proc.communicate()  # no need for stderr

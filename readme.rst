@@ -114,6 +114,9 @@ Support is experimental as well::
 
 And off you go.
 
+The Unicode block characters look a bit better with Source Code Pro as the
+terminal font.
+
 Could use some help here also,
 borrowing a Mac is my only option.
 Currently runs
