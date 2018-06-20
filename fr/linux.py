@@ -72,7 +72,7 @@ def check_optical(disk):
 
 def check_removable(dev, opts):
     ''' Removable drives can be identified under /sys. '''
-    try: # get parent device from sys filesystem, look from right.  :-/
+    try:  # get parent device from sys filesystem, look from right.  :-/
         parent = os.readlink(f'/sys/class/block/{dev}').rsplit("/", 2)[1]
         with open(f'/sys/block/{parent}/removable') as f:
             return f.read() == '1\n'
@@ -144,7 +144,7 @@ def get_diskinfo(opts, show_all=False, local_only=False):
         disk.isnet  = ':' in device     # cheesy but works
         if local_only and disk.isnet:
             continue
-        disk.isimg = is_img = dev.startswith('loop') # could be better
+        disk.isimg = is_img = dev.startswith('loop')  # could be better
         is_tmpfs = (device == 'tmpfs')
 
         # lots of junk here, so we throw away most entries
@@ -157,10 +157,9 @@ def get_diskinfo(opts, show_all=False, local_only=False):
                     if (is_img or
                         is_tmpfs or
                         mntp == '/boot/efi'):
-                        continue
-
+                            continue
                 break   # found a useful entry, stop here
-        else:           # nothing found
+        else:           # no-break, nothing was found
             continue    # skip this one
 
         disk.dev = dev

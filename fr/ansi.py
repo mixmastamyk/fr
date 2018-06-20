@@ -45,36 +45,36 @@ if True:  # foldable init
     dimbb       = '%s;%s' % (bold, black)  # works in more places
 
     # A list of ansi escape sequences in template form.
-    fred        = '\x1b[00;31m%s\x1b[00m'
-    fbred       = '\x1b[01;31m%s\x1b[00m'
-    fgreen      = '\x1b[00;32m%s\x1b[00m'
-    fbgreen     = '\x1b[01;32m%s\x1b[00m'
-    forange     = '\x1b[00;33m%s\x1b[00m'
-    fbyellow    = '\x1b[01;33m%s\x1b[00m'
-    fblue       = '\x1b[00;34m%s\x1b[00m'
-    fbblue      = '\x1b[01;34m%s\x1b[00m'
-    fpurple     = '\x1b[00;35m%s\x1b[00m'
-    fbpurple    = '\x1b[01;35m%s\x1b[00m'
-    fcyan       = '\x1b[00;36m%s\x1b[00m'
-    fbcyan      = '\x1b[01;36m%s\x1b[00m'
-    fgrey       = '\x1b[00;37m%s\x1b[00m'
-    fwhite      = '\x1b[01;37m%s\x1b[00m'
+    #~ fred        = '\x1b[00;31m%s\x1b[00m'
+    #~ fbred       = '\x1b[01;31m%s\x1b[00m'
+    #~ fgreen      = '\x1b[00;32m%s\x1b[00m'
+    #~ fbgreen     = '\x1b[01;32m%s\x1b[00m'
+    #~ forange     = '\x1b[00;33m%s\x1b[00m'
+    #~ fbyellow    = '\x1b[01;33m%s\x1b[00m'
+    #~ fblue       = '\x1b[00;34m%s\x1b[00m'
+    #~ fbblue      = '\x1b[01;34m%s\x1b[00m'
+    #~ fpurple     = '\x1b[00;35m%s\x1b[00m'
+    #~ fbpurple    = '\x1b[01;35m%s\x1b[00m'
+    #~ fcyan       = '\x1b[00;36m%s\x1b[00m'
+    #~ fbcyan      = '\x1b[01;36m%s\x1b[00m'
+    #~ fgrey       = '\x1b[00;37m%s\x1b[00m'
+    #~ fwhite      = '\x1b[01;37m%s\x1b[00m'
     #fgrey       = '\x1b[00;38m%s\x1b[00m'
     #fwhite      = '\x1b[01;38m%s\x1b[00m'
 
-    redrev      = '\x1b[00;05;37;41m%s\x1b[00m'
-    grerev      = '\x1b[00;05;37;42m%s\x1b[00m'
-    yelrev      = '\x1b[01;05;37;43m%s\x1b[00m'
+    #~ redrev      = '\x1b[00;05;37;41m%s\x1b[00m'
+    #~ grerev      = '\x1b[00;05;37;42m%s\x1b[00m'
+    #~ yelrev      = '\x1b[01;05;37;43m%s\x1b[00m'
 
-    rev         = '\x1b[07m%s\x1b[00m'
-    fbold       = '\x1b[01m%s\x1b[00m'
-    fdim        = '\x1b[02m%s\x1b[00m'
+    #~ rev         = '\x1b[07m%s\x1b[00m'
+    #~ fbold       = '\x1b[01m%s\x1b[00m'
+    #~ fdim        = '\x1b[02m%s\x1b[00m'
     fdimbb      = '\x1b[1;30m%s\x1b[0m'
 
     # Readline encoded escape sequences:
-    greenprompt  = '\001\x1b[01;32m\002%s\001\x1b[00m\002'
-    yellowprompt = '\001\x1b[01;33m\002%s\001\x1b[00m\002'
-    redprompt    = '\001\x1b[01;31m\002%s\001\x1b[00m\002'
+    #~ greenprompt  = '\001\x1b[01;32m\002%s\001\x1b[00m\002'
+    #~ yellowprompt = '\001\x1b[01;33m\002%s\001\x1b[00m\002'
+    #~ redprompt    = '\001\x1b[01;31m\002%s\001\x1b[00m\002'
 
     # 256 color support
     csi8        = '\x1b[0;38;5;%03dm'
@@ -90,7 +90,7 @@ if True:  # foldable init
     yell8       = 184
 
     pal8 = [grn8, grn8, grn8, grn8, grn8, grnyl8, yell8, orng8, orngrd8, red8]
-    map8 = { blue: blu8, red: red8, green: grn8, dim: dim }
+    map8 = {blue: blu8, red: red8, green: grn8, dim: dim}
     rst8 = grn8
 
     # 16 colors
@@ -104,8 +104,10 @@ if True:  # foldable init
 
 def colorstart(fgcolor, bgcolor, weight):
     ''' Begin a text style. '''
-    if weight:          weight = bold
-    else:               weight = norm
+    if weight:
+        weight = bold
+    else:
+        weight = norm
     if bgcolor:
         out('\x1b[%s;%s;%sm' % (weight, fgcolor, bgcolor))
     else:
@@ -130,7 +132,7 @@ def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
 
 
 def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
-    ''' Creates a simple bar graph. '''
+    ''' Creates a monochrome or two-color bar graph. '''
     threshold = 100.0 // (maxwidth * 2)  # if smaller than 1/2 of one char wide
     position = 0
     begpcnt = data[0][1] * 100
@@ -141,7 +143,7 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
     datalen = len(data)
 
     # Print left bracket in correct color:
-    if cbrackets and incolor: # and not (begpcnt == 0 and endpcnt == 0):
+    if cbrackets and incolor:       # and not (begpcnt == 0 and endpcnt == 0):
         if begpcnt < threshold: bkcolor = data[-1][2]  # greenbg
         else:                   bkcolor = data[0][2]   # redbg
         cprint(cbrackets[0], data[0][2], bkcolor, None, None)
@@ -151,18 +153,18 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
     for i, part in enumerate(data):
         # unpack data
         char, pcnt, fgcolor, bgcolor, bold = part
-        width = int( round(pcnt/100.0 * maxwidth, 0) )
+        width = int(round(pcnt/100.0 * maxwidth, 0))
         position = position + width
 
         # and graph
-        if incolor and not ( fgcolor is None):
+        if incolor and not (fgcolor is None):
             cprint(char * width, fgcolor, bgcolor, bold, False)
         else:
             out((char * width))
 
         if i == (datalen - 1):   # correct last one
             if position < maxwidth:
-                if incolor: # char
+                if incolor:     # char
                     cprint(char * (maxwidth-position), fgcolor, bgcolor,
                            bold, False)
                 else:
@@ -172,8 +174,8 @@ def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
 
     # Print right bracket in correct color:
     if cbrackets and incolor:
-        if endpcnt < threshold: bkcolor = data[0][3] # redbg
-        else:                   bkcolor = data[1][3] # greenbg
+        if endpcnt < threshold: bkcolor = data[0][3]    # redbg
+        else:                   bkcolor = data[1][3]    # greenbg
         cprint(cbrackets[1], data[-1][2], bkcolor, None, None)
     else:
         out(cbrackets[1])
@@ -204,7 +206,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
     ''' Creates a "rainbar" style bar graph. '''
     if not data: return             # Nada to do
     datalen = len(data)
-    endpcnt = data[-1][1] # * 100
+    endpcnt = data[-1][1]
     maxwidth = maxwidth - 2         # because of brackets
 
     # setup
@@ -236,7 +238,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
             for j in range(width):
                 # faster?
                 colorind = fgcolor or min(int((j+offset)/bucket), (plen-1))
-                #~ colorind = fgcolor or get_color_index(j, offset, maxwidth, plen)
+                #~ colorind=fgcolor or get_color_index(j, offset,maxwidth,plen)
                 if colorind == lastind:
                     out(char)
                 else:
@@ -249,7 +251,7 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
         if i == (datalen - 1):          # check if last one correct
             if position < maxwidth:
                 rest = maxwidth - position
-                if incolor: # char
+                if incolor:
                     out((csib % pal[-1]) + (empty * rest))
                 else:
                     out(char * rest)
@@ -263,4 +265,3 @@ def rainbar(data, maxwidth, incolor=True, hicolor=True,
         colorend()
     else:
         out(cbrackets[1])
-

@@ -8,33 +8,33 @@ from fr.meta import (pkgname, version, email, license, authors, description,
 # readme is needed at upload time, not install time
 try:
     with open('readme.rst', encoding='utf8') as f:
-        long_description = f.read()
+        long_desc = f.read()
 except IOError:
-    long_description = ''
+    long_desc = ''
 
 
-# install helper script?
+# install helper script for windows?
 scripts = [join(pkgname, pkgname)]
 if os.name == 'nt':
     scripts.append('fr.cmd')
 
 
 setup(
-    name          = pkgname,
-    version       = version,
-    description   = description,
-    author        = authors,
-    author_email  = email,
-    url           = repo_url,
-    download_url  = '',
-    license       = license,
-    packages      = [pkgname],
-    scripts       = scripts,
-    extras_require = {
+    name            = pkgname,
+    version         = version,
+    description     = description,
+    author          = authors,
+    author_email    = email,
+    url             = repo_url,
+    download_url    = '',
+    license         = license,
+    packages        = [pkgname],
+    scripts         = scripts,
+    extras_require  = {
         'win': ['winstats', 'colorama'],
     },
-    python_requires='>3.6.0',
+    python_requires = '>3.6.0',
 
-    long_description = long_description,
-    classifiers   = trove_classifiers,
+    long_desc       = long_desc,
+    classifiers     = trove_classifiers,
 )

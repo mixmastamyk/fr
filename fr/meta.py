@@ -14,7 +14,7 @@ __author__      = authors = ', '.join([
                                 #~ 'and contributors',
                             ])
 copyright       = '© 2005-%s' % _localtime().tm_year
-description     = 'A program to print available free resources in delicious flavors.'
+description     = 'A program to print resources in delicious flavors.'
 email           = ''
 license         = license = 'GPLv3'
 

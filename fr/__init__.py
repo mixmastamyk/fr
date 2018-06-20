@@ -175,8 +175,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
 
         # print stats
         data = (
-            (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar), # Used
-            (_freeico, 100-disk.pcnt, ffg,  None,  False),         # free
+            (_usedico, disk.pcnt,     ufg,  None,  pform.boldbar),  # Used
+            (_freeico, 100-disk.pcnt, ffg,  None,  False),          # free
         )
         mntp = fmtstr(disk.mntp, align='<', trunc='left',
                       width=(opts.colwidth * 2) + 2)
@@ -270,7 +270,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         swup = float(swpu) / swpt * 100       # % used
         slblcolor = ansi.get_label_tmpl(swup, opts.width, opts.hicolor)
     else:
-        swpf = swpc = swpu = swfp = swcp = swup = 0 # avoid /0 error
+        swpf = swpc = swpu = swfp = swcp = swup = 0         # avoid /0 error
         slblcolor = None
     if opts.hicolor:
         swap_color = ansi.csi8_blk % ansi.blu8
@@ -319,7 +319,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         (_freeico, swfp, None, None, False),                # free
     )
     if widelayout:
-        out(fmtstr(_diskico + ' SWAP', align='<') + fmtstr()) # label
+        out(fmtstr(_diskico + ' SWAP', align='<') + fmtstr())   # label
         if swpt:
             out(
                 fmtval(swpt) +
@@ -359,7 +359,6 @@ def print_meminfo(meminfo, widelayout, incolor):
         print()
 
     print()  # extra newline separates mem and disk sections
-
 
 
 def truncstr(text, width, align='right'):

@@ -4,18 +4,16 @@
 
     Data gathering routines located here.
 '''
-import sys
-import os
-import locale
+import sys, os, locale
 import platform
 import stat
 
 from fr.utils import DiskInfo, MemInfo
 
 try:
-    from winstats import ( _diskusage, get_drives, get_drive_type, get_fs_usage,
-                           get_perf_data, get_perf_info, get_mem_info,
-                           get_vol_info )
+    from winstats import (_diskusage, get_drives, get_drive_type, get_fs_usage,
+                          get_perf_data, get_perf_info, get_mem_info,
+                          get_vol_info)
 except ImportError:
     sys.exit('Error: winstats module not found.  C:\> pip3 install winstats')
 
@@ -111,10 +109,13 @@ def get_diskinfo(opts, show_all=False, local_only=False):
     for drive in get_drives():
         drive += ':\\'
         disk = DiskInfo(dev=drive)
-        try:  usage = get_fs_usage(drive)
+        try:
+            usage = get_fs_usage(drive)
         except WindowsError:  # disk not ready, request aborted, etc.
-            if show_all:  usage = _diskusage(0, 0, 0)
-            else:         continue
+            if show_all:
+                usage = _diskusage(0, 0, 0)
+            else:
+                continue
         disk.ocap   = usage.total
         disk.cap    = usage.total / outunit
         disk.used   = usage.used / outunit
@@ -131,7 +132,7 @@ def get_diskinfo(opts, show_all=False, local_only=False):
         dtint, dtstr = get_drive_type(drive)
         setattr(disk, *_drive_type_result[dtint])
 
-        disk.rw = os.access(drive, os.W_OK) # doesn't work on optical
+        disk.rw = os.access(drive, os.W_OK)  # doesn't work on optical
         if usage.total:    # this not giving correct result on Win7 RTM either
             disk.rw = stat.S_IMODE(os.stat(drive).st_mode) & stat.S_IWRITE
         else:
@@ -191,7 +192,7 @@ def get_meminfo(opts):
 
     if opts.debug:
         import locale
-        fmt = lambda x: locale.format('%d', x, True)
+        fmt = lambda val: locale.format('%d', val, True)
         print()
         print('TotalPhys:', fmt(totl))
         print('AvailPhys:', fmt(mstat.AvailPhys))

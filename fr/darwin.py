@@ -36,7 +36,6 @@ else:
     coloravail = False
 
 
-
 def get_label_map(opts):
     ''' Find volume labels from filesystem and return in dict format. '''
     result = {}
@@ -144,8 +143,8 @@ def get_meminfo(opts):
     meminfo.swapcached = 0
 
     # alternative to calculating used:
-    # ~ meminfo.swapused = (meminfo.swaptotal - meminfo.swapcached -
-                        # ~ meminfo.swapfree)
+    #~ meminfo.swapused = (meminfo.swaptotal - meminfo.swapcached -
+                        #~ meminfo.swapfree)
     if opts.debug:
         print('meminfo:', meminfo)
     return meminfo
