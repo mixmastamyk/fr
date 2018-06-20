@@ -173,7 +173,7 @@ License
 Release Notes
 ~~~~~~~~~~~~~~~
 
-- 3.0b4 - Readme fixes.
+- 3.0b4 - Readme fixes for PyPI.
 - 3.0a0 - Major rewrite to support Python 3.6,
   refactor shitty thirteen year-old code,
   remove deps on Dbus and Udisks.
