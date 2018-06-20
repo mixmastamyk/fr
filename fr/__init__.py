@@ -348,6 +348,7 @@ def print_meminfo(meminfo, widelayout, incolor):
             if swpc:
                 out('  ' + fmtval(swpc, swap_color))    # ?
             print()
+            out(fmtstr())  # blank space
 
             # print graph
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
