@@ -24,6 +24,7 @@ coloravail  = True
 hicolor     = None
 boldbar     = None
 TERM        = os.environ.get('TERM')
+locale.setlocale(locale.LC_ALL, '')
 
 if TERM == 'xterm-256color':
     hicolor     = True
@@ -34,25 +35,23 @@ elif TERM == 'xterm':
 else:
     coloravail = False
 
-locale.setlocale(locale.LC_ALL, '')
 
 
 def get_label_map(opts):
-    ''' TODO: need better way to find label? '''
-    label_map = {}
-
+    ''' Find volume labels from filesystem and return in dict format. '''
+    result = {}
     try:  # get labels from filesystem
         for entry in os.scandir(diskdir):
             if entry.name.startswith('.'):
                 continue
             target = os.readlink(entry.path)
-            label_map[target] = entry.name
+            result[target] = entry.name
         if opts.debug:
-            print('\nlabel_map:', label_map)
+            print('\n\nlabel_map:', result)
     except FileNotFoundError:
         pass
 
-    return label_map
+    return result
 
 
 def get_diskinfo(opts, show_all=False, debug=False, local_only=False):

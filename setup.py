@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import os
-#~ from distutils.core import setup
+from os.path import join
 from setuptools import setup
 from fr.meta import (pkgname, version, email, license, authors, description,
-                     repo_url)
+                     repo_url, trove_classifiers)
 
 # readme is needed at upload time, not install time
 try:
@@ -12,8 +12,9 @@ try:
 except IOError:
     long_description = ''
 
+
 # install helper script?
-scripts = [pkgname + '/' + pkgname]
+scripts = [join(pkgname, pkgname)]
 if os.name == 'nt':
     scripts.append('fr.cmd')
 
@@ -35,21 +36,5 @@ setup(
     python_requires='>3.6.0',
 
     long_description = long_description,
-    classifiers     = [
-        'Development Status :: 4 - Beta',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Operating System :: Microsoft :: Windows :: Windows XP',
-        'Operating System :: POSIX :: Linux',
-        'Operating System :: MacOS :: MacOS X',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
-        'Topic :: System :: Hardware',
-        'Topic :: System :: Monitoring',
-        'Topic :: System :: Systems Administration',
-        'Topic :: Utilities',
-    ],
+    classifiers   = trove_classifiers,
 )

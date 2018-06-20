@@ -10,6 +10,7 @@ import locale
 from . import ansi
 
 
+# defaults
 _outunit = 1000000, 'Megabyte'  # 1 Megabyte default
 opts, pform = None, None
 out = sys.stdout.write
@@ -17,8 +18,7 @@ if sys.platform[:3] == 'win':  # :-(
     def out(*args, end=''):
         print(*args, end=end)
 
-
-# default icons
+# icons
 _ramico  = '⌁'
 _diskico = '▪'
 _cmonico = '▒'           # cache mono
@@ -138,11 +138,11 @@ def get_units(unit, binary=False):
 
 
 def print_diskinfo(diskinfo, widelayout, incolor):
-    'Disk information output function.'
+    ''' Disk information output function. '''
     sep = ' '
     if opts.relative:
         import math
-        base = max([ disk.ocap  for disk in diskinfo ])
+        base = max([ disk.ocap for disk in diskinfo ])
 
     for disk in diskinfo:
         if disk.ismntd:     ico = _diskico
@@ -161,7 +161,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         else:
             gwidth = opts.width
 
-        # check color settings
+        # check color settings, ffg: free foreground, ufg: used forground
         if disk.rw:
             ffg = ufg = None        # auto colors
         else:
@@ -181,11 +181,14 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         mntp = fmtstr(disk.mntp, align='<', trunc='left',
                       width=(opts.colwidth * 2) + 2)
         mntp = mntp.rstrip()  # prevent wrap
+        if disk.label == _emptico:
+            label = fmtstr(_emptico, ansi.fdimbb, align='<')
+        else:
+            label = fmtstr(disk.label, align='<')
 
         if widelayout:
             out(
-                fmtstr(ico + sep + disk.dev, align='<') +
-                fmtstr(disk.label, align='<')
+                fmtstr(ico + sep + disk.dev, align='<') + label
             )
             if cap:
                 out(fmtval(cap))
@@ -216,8 +219,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
             print()
         else:
             out(
-                fmtstr(ico + sep + disk.dev, align="<") +
-                fmtstr(disk.label, align='<')
+                fmtstr(ico + sep + disk.dev, align="<") + label
             )
             if cap:
                 out(
@@ -285,7 +287,7 @@ def print_meminfo(meminfo, widelayout, incolor):
     if widelayout:
         out(
             fmtstr(_ramico + ' RAM', align='<') +
-            fmtstr() +                              # volume
+            fmtstr() +                                      # volume col
             fmtval(totl) +
             fmtval(used, rlblcolor) +
             fmtval(free, rlblcolor)
@@ -297,24 +299,24 @@ def print_meminfo(meminfo, widelayout, incolor):
     else:
         out(
             fmtstr(_ramico + ' RAM', align="<") +
-            fmtstr() +                              # volume
+            fmtstr() +                                      # volume col
             fmtval(totl) +
             fmtval(used, rlblcolor) +
             fmtval(free, rlblcolor) +
             sep + sep +
             fmtval(cach, swap_color) + '\n' +
-            fmtstr()                                # blank space
+            fmtstr()                                        # blank space
         )
         # print graph
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print()                                     # extra line narrow layout
+        print()                             # extra line in narrow layout
 
     # Swap time:
     data = (
-        (_usedico, swup, None,  None, pform.boldbar),   # used
-        (_usedico, swcp, None,  None, pform.boldbar),   # cache
-        (_freeico, swfp, None,  None, False),           # free
+        (_usedico, swup, None, None, pform.boldbar),        # used
+        (_usedico, swcp, None, None, pform.boldbar),        # cache
+        (_freeico, swfp, None, None, False),                # free
     )
     if widelayout:
         out(fmtstr(_diskico + ' SWAP', align='<') + fmtstr()) # label
@@ -338,7 +340,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         out(fmtstr(_diskico + ' SWAP', align='<'))
         if swpt:
             out(
-                fmtstr() +                              # label placeholder
+                fmtstr() +                                  # volume col
                 fmtval(swpt) +
                 fmtval(swpu, slblcolor) +
                 fmtval(swpf, slblcolor)
@@ -369,5 +371,4 @@ def truncstr(text, width, align='right'):
         truncated = text[:width-1]
         after = _ellpico
 
-    text = f'{before}{truncated}{after}'
-    return text
+    return f'{before}{truncated}{after}'

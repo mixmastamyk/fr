@@ -9,6 +9,7 @@ from os.path import basename, join, normpath
 from fr.utils import DiskInfo, MemInfo
 
 
+# defaults
 diskdir     = '/dev/disk/by-label'
 encoding    = 'utf8'
 memfname    = '/proc/meminfo'
@@ -25,33 +26,33 @@ out         = sys.stdout.write
 locale.setlocale(locale.LC_ALL, '')
 
 
+# icons
 if TERM == 'linux':             # Basic Linux console, use ascii
-    hicolor     = False
-    boldbar     = True
-    _brckico    = ('|', '|')
-    _cmonico    = '/'
-    _discico    = 'o'
-    _diskico    = 'd'
-    _ellpico    = '~'
-    _emptico    = '0'
-    _freeico    = '-'
-    _gearico    = 's'
-    _imgico     = 'i'
-    _netwico    = 'n'
-    _ramico     = 'r'
-    _remvico    = '='
-    _unmnico    = 'u'
-    _usedico    = '#'
-    _warnico    = '!'
+    hicolor  = False
+    boldbar  = True
+    _brckico = ('|', '|')
+    _cmonico = '/'
+    _discico = 'o'
+    _diskico = 'd'
+    _ellpico = '~'
+    _emptico = '0'
+    _freeico = '-'
+    _gearico = 's'
+    _imgico  = 'i'
+    _netwico = 'n'
+    _ramico  = 'r'
+    _remvico = '='
+    _unmnico = 'u'
+    _usedico = '#'
+    _warnico = '!'
 elif TERM == 'xterm-256color':  # X11, etc.
-    hicolor     = True
-    boldbar     = False
+    hicolor  = True
+    boldbar  = False
+    _emptico = '∅'          # empty set
 
 
 class ColorNotAvail(Exception):
-    ''' Error: color support not available.  Install colorama:
-        pip3 install colorama
-    '''
+    ''' Error: color support not available.  Check $TERM. '''
     def __str__(self):
         return f'{self.__class__.__name__}: {self.__doc__}'
 
@@ -61,7 +62,7 @@ def check_optical(disk):
         Needs improvement.
     '''
     dev = disk.dev
-    if dev.startswith('sr') or 'cd' in dev:
+    if dev.startswith('sr') or ('cd' in dev):
         return True
     elif disk.fmt in optical_fs:
         return True
@@ -69,23 +70,50 @@ def check_optical(disk):
         return None
 
 
-def check_removable(dev):
+def check_removable(dev, opts):
+    ''' Removable drives can be identified under /sys. '''
     try: # get parent device from sys filesystem, look from right.  :-/
         parent = os.readlink(f'/sys/class/block/{dev}').rsplit("/", 2)[1]
         with open(f'/sys/block/{parent}/removable') as f:
             return f.read() == '1\n'
 
     except IndexError as err:
-        pass
-        #~ if opts.debug: print('ERROR: parent block device not found.', err)
+        if opts.debug:
+            print('ERROR: parent block device not found.', err)
     except IOError as err:
-        pass
-        #~ if opts.debug: print('ERROR:', err)
+        if opts.debug:
+            print('ERROR:', err)
+
+
+def decode_mntp(mntp):
+    ''' Mount point strings have a unique encoding for whitespace. :-/
+        https://stackoverflow.com/a/13576641/450917
+        https://stackoverflow.com/a/6117124/450917
+    '''
+    import re
+    replacements = {
+        r'\\040': ' ',
+        r'\\011': '\t',
+        r'\\012': '\n',
+        r'\\134': '\\',
+    }
+    pattern = re.compile('|'.join(replacements.keys()))
+    return pattern.sub(lambda m: replacements[re.escape(m.group(0))], mntp)
 
 
 def get_label_map(opts):
-    ''' TODO move that below to function. '''
-    pass
+    ''' Find volume labels from filesystem and return in dict format. '''
+    results = {}
+    try:
+        for entry in os.scandir(diskdir):
+            target = normpath(join(diskdir, os.readlink(entry.path)))
+            decoded_name = entry.name.encode('utf8').decode('unicode_escape')
+            results[target] = decoded_name
+        if opts.debug:
+            print('\n\nlabel_map:', results)
+    except FileNotFoundError:
+        pass
+    return results
 
 
 def get_diskinfo(opts, show_all=False, local_only=False):
@@ -93,17 +121,8 @@ def get_diskinfo(opts, show_all=False, local_only=False):
         Stats are divided by the outputunit.
     '''
     disks = []
-    label_map = {}
     outunit = opts.outunit
-    try:  # get labels from filesystem
-        for entry in os.scandir(diskdir):
-            target = normpath(join(diskdir, os.readlink(entry.path)))
-            decoded_name = entry.name.encode('utf8').decode('unicode_escape')
-            label_map[target] = decoded_name
-        if opts.debug:
-            print('\n\nlabel_map:', label_map)
-    except FileNotFoundError:
-        pass
+    label_map = get_label_map(opts)
 
     # get mount info
     try:
@@ -141,18 +160,17 @@ def get_diskinfo(opts, show_all=False, local_only=False):
                         continue
 
                 break   # found a useful entry, stop here
-        else:           # not found
-            continue    # dump it
+        else:           # nothing found
+            continue    # skip this one
 
         disk.dev = dev
         disk.fmt = fmt
-        # decode mntp :-/  https://stackoverflow.com/a/13576641/450917
-        disk.mntp = mntp = mntp.replace(r'\040', ' ')
+        disk.mntp = mntp = decode_mntp(mntp) if '\\' in mntp else mntp
         disk.ismntd = bool(mntp)
         disk.isopt = check_optical(disk)
         if device[0] == '/':  # .startswith('/dev'):
-            disk.isrem = check_removable(dev)
-        disk.label = label_map.get(device, '')
+            disk.isrem = check_removable(dev, opts)
+        disk.label = label_map.get(device, _emptico)
 
         # get disk usage information
         # http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/statvfs.h.html
@@ -185,7 +203,7 @@ def get_diskinfo(opts, show_all=False, local_only=False):
                     isnet = False,
                     isopt = check_optical(DiskInfo(dev=dev, fmt=None)),
                     isram = False,   # no such thing?
-                    isrem = check_removable(dev),
+                    isrem = check_removable(dev, opts),
                     label = label_map[devname],
                     rw = None,
                 )

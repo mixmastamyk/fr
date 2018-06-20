@@ -36,9 +36,9 @@ try:
 except ImportError:
     coloravail = False
 
-version = platform.win32_ver()[1]
-win7ver = '6.1.7600'
-vistver = '6.0.6000'
+version  = platform.win32_ver()[1]
+win7ver  = '6.1.7600'
+vistver  = '6.0.6000'
 hicolor  = False
 boldbar  = True
 col_lblw = 'CACHE'

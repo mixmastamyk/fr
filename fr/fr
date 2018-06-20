@@ -83,6 +83,7 @@ def setup():
         import fr.windows as pform
     elif plat == 'dar':
         import fr.darwin as pform
+    pform.debug = opts.debug  # to handle debug output
     opts.pform = pform
 
     # expand colwidth if room, one column extra per ten over threshold
@@ -162,8 +163,9 @@ def main(opts):
     maxpath = opts.colwidth * 2
     longestpth = min(longestpth, maxpath)
 
-    if not opts.width:  # automatic width
-        #         rm path col,   add space each, return path col, graph padding
+    if not opts.width:
+        # automatic width - figure out how much space is taken already
+        #         cols - mntpath, + space each col, path col, graph padding
         taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 4
         if widelayout:
             opts.width = opts.termcols - taken
