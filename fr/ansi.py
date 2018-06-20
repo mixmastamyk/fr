@@ -14,7 +14,7 @@ if sys.platform[:3] == 'win':  # don't bypass streams :-(
 
 
 if True:  # foldable init
-    # fg
+    # 16 colors - fg
     black       = 30
     red         = 31
     green       = 32
@@ -44,6 +44,17 @@ if True:  # foldable init
     strike      = 9
     dimbb       = '%s;%s' % (bold, black)  # works in more places
 
+    csi4        = '\x1b[0;%sm'
+    csi4b       = '\x1b[1;%sm'
+    csi4_blk    = csi4b + '%%s\x1b[0m'
+    yel         = yellow
+    pal4        = [green, green, green, green, green, yel, yel, yel, yel, red]
+    rst4        = green
+
+    # A list of ansi escape sequences in template form.
+    fbblue      = '\x1b[01;34m%s\x1b[00m'
+    fdimbb      = '\x1b[1;30m%s\x1b[0m'
+
     # A list of ansi escape sequences in template form.
     #~ fred        = '\x1b[00;31m%s\x1b[00m'
     #~ fbred       = '\x1b[01;31m%s\x1b[00m'
@@ -52,15 +63,14 @@ if True:  # foldable init
     #~ forange     = '\x1b[00;33m%s\x1b[00m'
     #~ fbyellow    = '\x1b[01;33m%s\x1b[00m'
     #~ fblue       = '\x1b[00;34m%s\x1b[00m'
-    #~ fbblue      = '\x1b[01;34m%s\x1b[00m'
     #~ fpurple     = '\x1b[00;35m%s\x1b[00m'
     #~ fbpurple    = '\x1b[01;35m%s\x1b[00m'
     #~ fcyan       = '\x1b[00;36m%s\x1b[00m'
     #~ fbcyan      = '\x1b[01;36m%s\x1b[00m'
     #~ fgrey       = '\x1b[00;37m%s\x1b[00m'
     #~ fwhite      = '\x1b[01;37m%s\x1b[00m'
-    #fgrey       = '\x1b[00;38m%s\x1b[00m'
-    #fwhite      = '\x1b[01;38m%s\x1b[00m'
+    # fgrey       = '\x1b[00;38m%s\x1b[00m'
+    # fwhite      = '\x1b[01;38m%s\x1b[00m'
 
     #~ redrev      = '\x1b[00;05;37;41m%s\x1b[00m'
     #~ grerev      = '\x1b[00;05;37;42m%s\x1b[00m'
@@ -69,7 +79,6 @@ if True:  # foldable init
     #~ rev         = '\x1b[07m%s\x1b[00m'
     #~ fbold       = '\x1b[01m%s\x1b[00m'
     #~ fdim        = '\x1b[02m%s\x1b[00m'
-    fdimbb      = '\x1b[1;30m%s\x1b[0m'
 
     # Readline encoded escape sequences:
     #~ greenprompt  = '\001\x1b[01;32m\002%s\001\x1b[00m\002'
@@ -92,14 +101,6 @@ if True:  # foldable init
     pal8 = [grn8, grn8, grn8, grn8, grn8, grnyl8, yell8, orng8, orngrd8, red8]
     map8 = {blue: blu8, red: red8, green: grn8, dim: dim}
     rst8 = grn8
-
-    # 16 colors
-    csi4        = '\x1b[0;%sm'
-    csi4b       = '\x1b[1;%sm'
-    csi4_blk    = csi4b + '%%s\x1b[0m'
-    yel         = yellow
-    pal4        = [green, green, green, green, green, yel, yel, yel, yel, red]
-    rst4        = green
 
 
 def colorstart(fgcolor, bgcolor, weight):
