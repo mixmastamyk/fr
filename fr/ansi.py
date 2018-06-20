@@ -2,8 +2,8 @@
     ansilib, a library of common console color functions.
     (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
 
-    This module is quite old and could might be partially replaced with a
-    package dependency of common ansi routines.
+    This module is quite old and could be partially replaced with a package
+    dependency containing ansi routines.
 '''
 import sys
 
