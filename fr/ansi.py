@@ -1,14 +1,17 @@
 '''
     ansilib, a library of common console color functions.
     (C) 2005-18, Mike Miller - Released under the GPL, version 3+.
+
+    This module is quite old and could might be partially replaced with a
+    package dependency of common ansi routines.
 '''
 import sys
-
 
 out = sys.stdout.write
 if sys.platform[:3] == 'win':  # don't bypass streams :-(
     def out(*args, end=''):
         print(*args, end=end)
+
 
 if True:  # foldable init
     # fg
@@ -41,39 +44,37 @@ if True:  # foldable init
     strike      = 9
     dimbb       = '%s;%s' % (bold, black)  # works in more places
 
-    # A list of ansi escape sequences.
-    fred        = '[00;31m%s[00m'
-    fbred       = '[01;31m%s[00m'
-    fgreen      = '[00;32m%s[00m'
-    fbgreen     = '[01;32m%s[00m'
-    forange     = '[00;33m%s[00m'
-    fbyellow    = '[01;33m%s[00m'
-    fblue       = '[00;34m%s[00m'
-    fbblue      = '[01;34m%s[00m'
-    fpurple     = '[00;35m%s[00m'
-    fbpurple    = '[01;35m%s[00m'
-    fcyan       = '[00;36m%s[00m'
-    fbcyan      = '[01;36m%s[00m'
-    fgrey       = '[00;37m%s[00m'
-    fwhite      = '[01;37m%s[00m'
-    #fgrey       = '[00;38m%s[00m'
-    #fwhite      = '[01;38m%s[00m'
+    # A list of ansi escape sequences in template form.
+    fred        = '\x1b[00;31m%s\x1b[00m'
+    fbred       = '\x1b[01;31m%s\x1b[00m'
+    fgreen      = '\x1b[00;32m%s\x1b[00m'
+    fbgreen     = '\x1b[01;32m%s\x1b[00m'
+    forange     = '\x1b[00;33m%s\x1b[00m'
+    fbyellow    = '\x1b[01;33m%s\x1b[00m'
+    fblue       = '\x1b[00;34m%s\x1b[00m'
+    fbblue      = '\x1b[01;34m%s\x1b[00m'
+    fpurple     = '\x1b[00;35m%s\x1b[00m'
+    fbpurple    = '\x1b[01;35m%s\x1b[00m'
+    fcyan       = '\x1b[00;36m%s\x1b[00m'
+    fbcyan      = '\x1b[01;36m%s\x1b[00m'
+    fgrey       = '\x1b[00;37m%s\x1b[00m'
+    fwhite      = '\x1b[01;37m%s\x1b[00m'
+    #fgrey       = '\x1b[00;38m%s\x1b[00m'
+    #fwhite      = '\x1b[01;38m%s\x1b[00m'
 
-    redrev      = '[00;05;37;41m%s[00m'
-    grerev      = '[00;05;37;42m%s[00m'
-    yelrev      = '[01;05;37;43m%s[00m'
+    redrev      = '\x1b[00;05;37;41m%s\x1b[00m'
+    grerev      = '\x1b[00;05;37;42m%s\x1b[00m'
+    yelrev      = '\x1b[01;05;37;43m%s\x1b[00m'
 
-    rev         = '[07m%s[00m'
-    fbold       = '[01m%s[00m'
-    fdim        = '[02m%s[00m'
-    fdimbb      = '[1;30m%s[0m'
+    rev         = '\x1b[07m%s\x1b[00m'
+    fbold       = '\x1b[01m%s\x1b[00m'
+    fdim        = '\x1b[02m%s\x1b[00m'
+    fdimbb      = '\x1b[1;30m%s\x1b[0m'
 
     # Readline encoded escape sequences:
-    greenprompt  = '\001[01;32m\002%s\001[00m\002'
-    yellowprompt = '\001[01;33m\002%s\001[00m\002'
-    redprompt    = '\001[01;31m\002%s\001[00m\002'
-
-    # 256...
+    greenprompt  = '\001\x1b[01;32m\002%s\001\x1b[00m\002'
+    yellowprompt = '\001\x1b[01;33m\002%s\001\x1b[00m\002'
+    redprompt    = '\001\x1b[01;31m\002%s\001\x1b[00m\002'
 
     # 256 color support
     csi8        = '\x1b[0;38;5;%03dm'
@@ -106,17 +107,17 @@ def colorstart(fgcolor, bgcolor, weight):
     if weight:          weight = bold
     else:               weight = norm
     if bgcolor:
-        out('[%s;%s;%sm' % (weight, fgcolor, bgcolor))
+        out('\x1b[%s;%s;%sm' % (weight, fgcolor, bgcolor))
     else:
-        out('[%s;%sm' % (weight, fgcolor))
+        out('\x1b[%s;%sm' % (weight, fgcolor))
 
 
 def colorend(cr=False):
     ''' End color styles.  Resets to default terminal colors. '''
     if cr:
-        out('[0m\n')
+        out('\x1b[0m\n')
     else:
-        out('[0m')
+        out('\x1b[0m')
 
 
 def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
@@ -129,7 +130,7 @@ def cprint(text, fg=grey, bg=blackbg, w=norm, cr=False, encoding='utf8'):
 
 
 def bargraph(data, maxwidth, incolor=True, cbrackets=('\u2595', '\u258F')):
-    ''' Creates a bar graph. '''
+    ''' Creates a simple bar graph. '''
     threshold = 100.0 // (maxwidth * 2)  # if smaller than 1/2 of one char wide
     position = 0
     begpcnt = data[0][1] * 100
@@ -200,7 +201,7 @@ def get_color_index(pos, offset, maxwidth, plen):
 
 def rainbar(data, maxwidth, incolor=True, hicolor=True,
             cbrackets=('\u2595', '\u258F')):
-    ''' Creates a "rainbar" style graph. '''
+    ''' Creates a "rainbar" style bar graph. '''
     if not data: return             # Nada to do
     datalen = len(data)
     endpcnt = data[-1][1] # * 100
