@@ -20,7 +20,7 @@ from fr import (fmtstr, fmtval, get_units, truncstr, print_meminfo,
                 print_diskinfo)
 from fr.meta import version
 
-# Set defaults
+# defaults
 _debug          = False
 _binary         = False
 _colwidth       = 10
@@ -29,7 +29,9 @@ _extra_cols_cap = 4
 _graphwidth     = 0
 _incolor        = 'auto'
 _precision      = -1
+
 out             = sys.stdout.write
+NUMCOLS         = 6  # num of data columns, w/o graph
 
 
 def setup():
@@ -127,7 +129,6 @@ def main(opts):
     ''' Let's get it on... '''
     longestpth = opts.colwidth + 1     # extra space
     widelayout = opts.termcols > 89
-    numcols    = 6                     # data columns, w/o graph
 
     fr.load_config(opts)
     pform = opts.pform
@@ -136,7 +137,8 @@ def main(opts):
     if opts.debug:
         print('opts:', opts)    # or will get clobbered by set
 
-    out_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False)
+    out_fmt = fmtval(opts.outunit, precision=0, spacing=False, trunc=False,
+                     end='')
     out(f'\nFree Resources in Blocks of 1 {unitstr} ({out_fmt} bytes)')
 
     # get memory info
@@ -166,7 +168,7 @@ def main(opts):
     if not opts.width:
         # automatic width - figure out how much space is taken already
         #         cols - mntpath, + space each col, path col, graph padding
-        taken = ((numcols - 1) * (opts.colwidth + 1)) + longestpth + 4
+        taken = ((NUMCOLS - 1) * (opts.colwidth + 1)) + longestpth + 4
         if widelayout:
             opts.width = opts.termcols - taken
         else:
