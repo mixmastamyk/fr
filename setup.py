@@ -20,21 +20,21 @@ if os.name == 'nt':
 
 
 setup(
-    name            = pkgname,
-    version         = version,
-    description     = description,
-    author          = authors,
-    author_email    = email,
-    url             = repo_url,
-    download_url    = '',
-    license         = license,
-    packages        = [pkgname],
-    scripts         = scripts,
-    extras_require  = {
+    name              = pkgname,
+    version           = version,
+    description       = description,
+    author            = authors,
+    author_email      = email,
+    url               = repo_url,
+    download_url      = '',
+    license           = license,
+    packages          = [pkgname],
+    scripts           = scripts,
+    python_requires   = '>3.6.0',
+    extras_require    = {
         'win': ['winstats', 'colorama'],
     },
-    python_requires = '>3.6.0',
 
-    long_desc       = long_desc,
-    classifiers     = trove_classifiers,
+    long_description  = long_desc,
+    classifiers       = trove_classifiers,
 )

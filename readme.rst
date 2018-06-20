@@ -30,8 +30,7 @@ You'll see something more like this::
     ◗ sr0    PREDATOR    45,206     45,206          0  ▉▉▉▉▉▉▉▉▉▉▉▉▉▏ /media/PREDATOR
 
 
-... in fruity colors,
-if you so choose.
+... in fruity colors if you so choose.
 Yes,
 color can be turned off,
 units chosen,
@@ -78,7 +77,7 @@ filesystems.
 
 To install system-wide as root::
 
-    sudo -H pip3 install --user fr
+    sudo -H pip3 install fr
 
 Per user (add ``/home/$USER/.local/bin`` to ``PATH``)::
 
@@ -114,13 +113,13 @@ Support is experimental as well::
 
 And off you go.
 
-The Unicode block characters look a bit better with Source Code Pro as the
+FYI, the Unicode block characters look a bit better with Source Code Pro as the
 terminal font.
 
 Could use some help here also,
 borrowing a Mac is my only option.
 Currently runs
-``sysctl``, ``vm_stat``, and ``df``,
+``sysctl``, ``vm_stat``, and ``df`` under the hood,
 hoping there are better options?
 
 
@@ -174,8 +173,8 @@ License
 Release Notes
 ~~~~~~~~~~~~~~~
 
-
-3.0a0 - Major rewrite to support Python 3.6,
-        refactor shitty thirteen year-old code,
-        remove deps on Dbus and Udisks.
-        Still needs a lot of work.
+- 3.0b4 - Readme fixes.
+- 3.0a0 - Major rewrite to support Python 3.6,
+  refactor shitty thirteen year-old code,
+  remove deps on Dbus and Udisks.
+  Still needs a lot of work.
