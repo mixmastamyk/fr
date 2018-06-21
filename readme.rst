@@ -32,7 +32,8 @@ You'll see something more like this::
 
 ... in fruity colors if you so choose.
 Yes,
-color can be turned off,
+color can be turned off
+(``NO_COLOR`` environment variable is supported),
 units chosen,
 network mounts filtered,
 etc, etc.
