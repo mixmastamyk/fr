@@ -181,7 +181,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         mntp = fmtstr(disk.mntp, align='<', trunc='left',
                       width=(opts.colwidth * 2) + 2)
         mntp = mntp.rstrip()  # prevent wrap
-        if disk.label == _emptico:
+        if disk.label is None:
             label = fmtstr(_emptico, ansi.fdimbb, align='<')
         else:
             label = fmtstr(disk.label, align='<')
@@ -251,8 +251,6 @@ def print_meminfo(meminfo, widelayout, incolor):
     cach = meminfo.cached + meminfo.buffers
     free = meminfo.memfree
     used = meminfo.used
-    if opts.debug:
-        print(f'\n  totl: {totl}, used: {used}, free: {free}, cach: {cach}\n')
 
     usep = float(used) / totl * 100           # % used of total ram
     cacp = float(cach) / totl * 100           # % cache

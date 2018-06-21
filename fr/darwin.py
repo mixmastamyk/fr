@@ -13,6 +13,7 @@ from os.path import basename
 from fr.utils import DiskInfo, MemInfo, Info, run
 
 devfilter   = (b'devfs', b'map')
+mntfilter   = (b'/private/var/vm',)
 diskcmd     = '/bin/df -k'.split()
 diskdir     = '/Volumes'
 syscmd      = '/usr/sbin/sysctl hw.memsize vm.swapusage'.split()
@@ -61,34 +62,33 @@ def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
     disks = []
     try:
         label_map = get_label_map(opts)
-        lines = run(diskcmd).splitlines()[1:]  # dump header
+        lines = run(diskcmd).splitlines()[1:]   # dump header
         for line in lines:
             tokens  = line.split()
-            first_token = tokens[0]
-            dev = basename(first_token)
+            mntp = tokens[-1]
+            dev = basename(tokens[0])
             disk = DiskInfo()
-            if first_token in devfilter:
+            if (dev in devfilter) or (mntp in mntfilter):
                 if show_all:
-                    if first_token == b'map':  # fix alignment :-/
-                        tokens[0] = first_token + b' ' + tokens[1]
-                        dev = tokens[0]
+                    if dev == b'map':           # fix alignment :-/
+                        dev = tokens[0] = b'%b %b' % (dev, tokens[1])
                         del tokens[1]
                     disk.isram = True
                 else:
                     continue
 
-            # convert to bytes, then output units
-            disk.dev    = dev.decode('utf8')
+            # convert to bytes as integer, then output units
+            disk.dev    = dev = dev.decode('ascii')
             disk.ocap   = float(tokens[1]) * 1024
             disk.cap    = disk.ocap / outunit
             disk.free   = float(tokens[3]) * 1024 / outunit
             disk.pcnt   = int(tokens[4][:-1])
             disk.used   = float(tokens[2]) * 1024 / outunit
 
-            disk.mntp   = tokens[8].decode('utf8')
-            disk.label  = label_map.get(disk.mntp, '')
+            disk.mntp   = mntp.decode('utf8')
+            disk.label  = label_map.get(disk.mntp)
             disk.ismntd = bool(disk.mntp)
-            disk.isnet  = ':' in tokens[0].decode('utf8')  # cheesy, works?
+            disk.isnet  = ':' in dev  # cheesy but may work? (macos)
             if local_only and disk.isnet:
                 continue
             if disk.ismntd:

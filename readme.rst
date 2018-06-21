@@ -37,6 +37,13 @@ units chosen,
 network mounts filtered,
 etc, etc.
 
+``fr`` 3.x has been tested on
+Ubuntu 18.04 Bionic "Tch-tch-tch-tch…",
+Windows 7,
+and
+MacOS 10.13 "High Sierra,"
+so far.
+
 
 .. note::
 
@@ -44,14 +51,7 @@ etc, etc.
     over.
     To use with an earlier version of Python,
     try ``fr`` 1.x,
-    which supports Python 2.7.
-
-    ``fr`` has been tested on
-    Ubuntu 18.04 Bionic "Tch-tch-tch-tch…",
-    Windows 7,
-    and
-    Mac OS X (10.11)
-    so far.
+    which supports Python 2.7 and earlier platforms.
 
 
 .. ~ .. raw:: html

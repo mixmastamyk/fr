@@ -48,7 +48,6 @@ if TERM == 'linux':             # Basic Linux console, use ascii
 elif TERM == 'xterm-256color':  # X11, etc.
     hicolor  = True
     boldbar  = False
-    _emptico = '∅'          # empty set
 
 
 class ColorNotAvail(Exception):
@@ -169,7 +168,7 @@ def get_diskinfo(opts, show_all=False, local_only=False):
         disk.isopt = check_optical(disk)
         if device[0] == '/':  # .startswith('/dev'):
             disk.isrem = check_removable(dev, opts)
-        disk.label = label_map.get(device, _emptico)
+        disk.label = label_map.get(device)
 
         # get disk usage information
         # http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/statvfs.h.html

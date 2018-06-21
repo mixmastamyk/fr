@@ -37,6 +37,7 @@ class DiskInfo(Info):
         self.pcnt    = None      # percentage used
         self.used    = None      # used, converted to out unit
 
+        # set attributes, if need be
         for kwarg in kwargs:
             setattr(self, kwarg, kwargs[kwarg])
 
@@ -54,6 +55,10 @@ class MemInfo(Info):
         self.swaptotal  = None
         self.swapused   = None
         self.used       = None
+
+        # set attributes, if need be
+        for kwarg in kwargs:
+            setattr(self, kwarg, kwargs[kwarg])
 
 
 def run(cmd, shell=False, debug=False):
