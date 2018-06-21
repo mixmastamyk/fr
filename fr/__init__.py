@@ -13,7 +13,9 @@ from . import ansi
 # defaults
 _outunit = 1000000, 'Megabyte'  # 1 Megabyte default
 opts, pform = None, None
+dim_templ, swap_clr_templ = None, None
 out = sys.stdout.write
+
 if sys.platform[:3] == 'win':  # :-(
     def out(*args, end=''):
         print(*args, end=end)
@@ -37,15 +39,25 @@ _brckico = ('▕', '▏')    # start, end "brackets"
 
 
 def load_config(options):
-    ''' Load options, platform, and icons. '''
+    ''' Load options, platform, colors, and icons. '''
     global opts, pform
     opts = options
     pform = options.pform
     global_ns = globals()
 
-    for varname in dir(pform):  # load icons into module namespace
+    # get colors
+    if pform.hicolor:
+        global_ns['dim_templ'] = ansi.dim8t
+        global_ns['swap_clr_templ'] = ansi.csi8_blk % ansi.blu8
+    else:
+        global_ns['dim_templ'] = ansi.dim4t
+        global_ns['swap_clr_templ'] = ansi.fbblue
+
+    # load icons into module namespace
+    for varname in dir(pform):
         if varname.startswith('_') and varname.endswith('ico'):
             global_ns[varname] = getattr(pform, varname)
+
 
 
 def fmtstr(text='', colorstr=None, align='>', trunc=True, width=0, end=' '):
@@ -165,7 +177,8 @@ def print_diskinfo(diskinfo, widelayout, incolor):
         if disk.rw:
             ffg = ufg = None        # auto colors
         else:
-            ffg = ufg = ansi.dimbb  # dim or dark grey
+            # dim or dark grey
+            ffg = ufg = (ansi.dim8 if opts.hicolor else ansi.dim4)
 
         cap = disk.cap
         if cap and disk.rw:
@@ -182,7 +195,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                       width=(opts.colwidth * 2) + 2)
         mntp = mntp.rstrip()  # prevent wrap
         if disk.label is None:
-            label = fmtstr(_emptico, ansi.fdimbb, align='<')
+            label = fmtstr(_emptico, dim_templ, align='<')
         else:
             label = fmtstr(disk.label, align='<')
 
@@ -200,10 +213,10 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                 else:
                     out(
                         fmtstr() +
-                        fmtstr(_emptico, ansi.fdimbb)
+                        fmtstr(_emptico, dim_templ)
                     )
             else:
-                out(fmtstr(_emptico, ansi.fdimbb))
+                out(fmtstr(_emptico, dim_templ))
 
             if cap:
                 if disk.rw:  # factoring this caused colored brackets
@@ -228,7 +241,7 @@ def print_diskinfo(diskinfo, widelayout, incolor):
                     fmtval(disk.free, lblcolor)
                 )
             else:
-                out(fmtstr(_emptico, ansi.fdimbb) + fmtstr() + fmtstr())
+                out(fmtstr(_emptico, dim_templ) + fmtstr() + fmtstr())
             print(sep, mntp)
 
             if cap:
@@ -270,10 +283,6 @@ def print_meminfo(meminfo, widelayout, incolor):
     else:
         swpf = swpc = swpu = swfp = swcp = swup = 0         # avoid /0 error
         slblcolor = None
-    if opts.hicolor:
-        swap_color = ansi.csi8_blk % ansi.blu8
-    else:
-        swap_color = ansi.fbblue
     cacheico = _usedico if incolor else _cmonico
 
     # print RAM info
@@ -293,7 +302,7 @@ def print_meminfo(meminfo, widelayout, incolor):
         # print graph
         ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                      cbrackets=_brckico)
-        print('', fmtval(cach, swap_color))
+        print('', fmtval(cach, swap_clr_templ))
     else:
         out(
             fmtstr(_ramico + ' RAM', align="<") +
@@ -302,7 +311,7 @@ def print_meminfo(meminfo, widelayout, incolor):
             fmtval(used, rlblcolor) +
             fmtval(free, rlblcolor) +
             sep + sep +
-            fmtval(cach, swap_color) + '\n' +
+            fmtval(cach, swap_clr_templ) + '\n' +
             fmtstr()                                        # blank space
         )
         # print graph
@@ -325,14 +334,14 @@ def print_meminfo(meminfo, widelayout, incolor):
                 fmtval(swpf, slblcolor)
             )
         else:
-            print(fmtstr(_emptico, ansi.fdimbb))
+            print(fmtstr(_emptico, dim_templ))
 
         # print graph
         if swpt:
             ansi.rainbar(data, opts.width, incolor, hicolor=opts.hicolor,
                          cbrackets=_brckico)
             if swpc:
-                out(' ' + fmtval(swpc, swap_color))
+                out(' ' + fmtval(swpc, swap_clr_templ))
             print()
     else:
         out(fmtstr(_diskico + ' SWAP', align='<'))
@@ -344,7 +353,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                 fmtval(swpf, slblcolor)
             )
             if swpc:
-                out('  ' + fmtval(swpc, swap_color))    # ?
+                out('  ' + fmtval(swpc, swap_clr_templ))
             print()
             out(fmtstr())  # blank space
 
@@ -353,7 +362,7 @@ def print_meminfo(meminfo, widelayout, incolor):
                          cbrackets=_brckico)
             print()
         else:
-            print(' ' + fmtstr(_emptico, ansi.fdimbb, align='<'))
+            print(' ' + fmtstr(_emptico, dim_templ, align='<'))
         print()
 
     print()  # extra newline separates mem and disk sections

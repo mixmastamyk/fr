@@ -59,7 +59,7 @@ col_lbls = 'CACHE'
 #~ _usedico = '\xfe'       # block
 
 # ascii  :-/
-_brckico = ('|', '|')
+_brckico = ('[', ']')
 _cmonico = '/'
 _discico = 'o'
 _diskico = 'd'

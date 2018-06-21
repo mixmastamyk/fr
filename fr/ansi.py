@@ -42,7 +42,7 @@ if True:  # foldable init
     underline   = 4
     reverse     = 7
     strike      = 9
-    dimbb       = '%s;%s' % (bold, black)  # works in more places
+    dim4        = '%s;%s' % (bold, black)  # dark grey - works in more places
 
     csi4        = '\x1b[0;%sm'
     csi4b       = '\x1b[1;%sm'
@@ -53,7 +53,7 @@ if True:  # foldable init
 
     # A list of ansi escape sequences in template form.
     fbblue      = '\x1b[01;34m%s\x1b[00m'
-    fdimbb      = '\x1b[1;30m%s\x1b[0m'
+    dim4t       = '\x1b[1;30m%s\x1b[0m'
 
     # A list of ansi escape sequences in template form.
     #~ fred        = '\x1b[00;31m%s\x1b[00m'
@@ -97,6 +97,8 @@ if True:  # foldable init
     orngrd8     = 166
     red8        = 160
     yell8       = 184
+    dim8        = '38;5;240'
+    dim8t       = '\x1b[38;5;240m%s\x1b[0m'
 
     pal8 = [grn8, grn8, grn8, grn8, grn8, grnyl8, yell8, orng8, orngrd8, red8]
     map8 = {blue: blu8, red: red8, green: grn8, dim: dim}

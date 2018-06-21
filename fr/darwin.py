@@ -4,9 +4,6 @@
     License: GPLv3+.
 
     Data gathering routines located here.
-
-    TODO:
-        - dark grey color is black and very hard to see.
 '''
 import os, locale
 from os.path import basename

@@ -74,9 +74,6 @@ def setup():
     # get_terminal_size(), must be done before colorama to avoid crash
     opts.termcols, _ = shutil.get_terminal_size((80, 20))  # fallback
     isatty = hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno())
-    if not isatty:  # must encode for file redirection
-        import codecs
-        sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
     plat = sys.platform[:3]
     if plat == 'lin':

@@ -127,10 +127,16 @@ hoping there are better options?
 Limitations
 ~~~~~~~~~~~~~
 
-Both Windows and Mac OS are not currently able to detect whether drives are
-optical or network.
+Optical, Network, Removable
++++++++++++++++++++++++++++++
+
+Both Windows and Mac OS are not currently able to detect whether extended
+properties of filesystems.
 The port to Python 3 seems to have broken Windows in that regard,
 which used to work.
+
+Unicode
++++++++++
 
 I've given up on Unicode icons (for now) on the Windows console and went back
 to ASCII.
@@ -138,6 +144,13 @@ Perhaps it should print out "conventional/high" memory too.
 
 The Linux console (the real boot up console, pre-X) has a very limited
 character set and therefore uses ASCII as well.
+
+Colors
++++++++++
+
+Windows and the Linux (non-X11) console are limited to sixteen colors.
+Apparently Windows 10 has been upgraded support more,
+but I haven't yet found documentation on how to utilize it.
 
 
 Use
@@ -174,6 +187,7 @@ License
 Release Notes
 ~~~~~~~~~~~~~~~
 
+- 3.0b5 - MacOS, filter /private/… by default.
 - 3.0b4 - Readme fixes for PyPI.
 - 3.0a0 - Major rewrite to support Python 3.6,
   refactor shitty thirteen year-old code,
