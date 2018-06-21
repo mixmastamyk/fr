@@ -13,6 +13,9 @@ class Info(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
+    def __lt__(self, other):  # sorting
+        return self.dev < other.dev
+
 
 class DiskInfo(Info):
     ''' Grouping of information related to a filesystem. '''

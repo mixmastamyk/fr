@@ -6,7 +6,7 @@
     Data gathering routines located here.
 '''
 import os, locale
-from os.path import basename
+from os.path import basename, islink
 from fr.utils import DiskInfo, MemInfo, Info, run
 
 devfilter   = (b'devfs', b'map')
@@ -41,7 +41,10 @@ def get_label_map(opts):
         for entry in os.scandir(diskdir):
             if entry.name.startswith('.'):
                 continue
-            target = os.readlink(entry.path)
+            if islink(entry.path):
+                target = os.readlink(entry.path)
+            else:
+                target = entry.path
             result[target] = entry.name
         if opts.debug:
             print('\n\nlabel_map:', result)
@@ -62,7 +65,7 @@ def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
         lines = run(diskcmd).splitlines()[1:]   # dump header
         for line in lines:
             tokens  = line.split()
-            mntp = tokens[-1]
+            mntp = b' '.join(tokens[8:])
             dev = basename(tokens[0])
             disk = DiskInfo()
             if (dev in devfilter) or (mntp in mntfilter):
@@ -97,7 +100,8 @@ def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
             # ~ disk.isopt  = None  # TODO: not sure how to get these
             # ~ disk.isrem  = None
             disks.append(disk)
-    except IOError:
+    except IOError as err:
+        print(err)
         return None
 
     if opts.debug:
@@ -105,6 +109,7 @@ def get_diskinfo(opts, show_all=False, debug=False, local_only=False):
         for disk in disks:
             print(disk.dev, disk)
             print()
+    disks.sort()
     return disks
 
 
