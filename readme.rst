@@ -76,13 +76,13 @@ data is read from the
 ``/proc``, ``/dev``, and potentially ``/sys``
 filesystems.
 
+To install per user (add ``/home/$USER/.local/bin`` to ``PATH``)::
+
+    pip3 install --user fr
+
 To install system-wide as root::
 
     sudo -H pip3 install fr
-
-Per user (add ``/home/$USER/.local/bin`` to ``PATH``)::
-
-    pip3 install --user fr
 
 
 |
@@ -93,13 +93,16 @@ Windows
 Support is still experimental.
 Could use some help as Win7 in a VM is all I have access to these days.
 
-Run as Admin::
-
-    pip3 install fr[win]    # installs winstats, colorama
-
-or a user install, but need to add the install folder to ``PATH``::
+To install per user::
 
     pip3 install --user fr[win]
+
+(You'll need to add the install folder to your ``PATH``,
+e.g. ``C:\Users\%USERNAME%\Python36\Scripts``.)
+
+To install for everyone, run as Admin::
+
+    pip3 install fr[win]    # installs winstats, colorama
 
 
 |
@@ -115,7 +118,7 @@ Support is experimental as well::
 And off you go.
 
 FYI, the Unicode block characters look a bit better with Source Code Pro as the
-terminal font.
+terminal font—YMMV.
 
 Could use some help here also,
 borrowing a Mac is my only option.
@@ -148,9 +151,9 @@ character set and therefore uses ASCII as well.
 Colors
 +++++++++
 
-Windows and the Linux (non-X11) console are limited to sixteen colors.
-Apparently Windows 10 has been upgraded support more,
-but I haven't yet found documentation on how to utilize it.
+Both Windows and the Linux (non-X11) consoles are limited to sixteen colors.
+Apparently Windows 10 has been upgraded to support more,
+but I haven't yet found documentation on how to detect it.
 
 
 Use
@@ -187,9 +190,7 @@ License
 Release Notes
 ~~~~~~~~~~~~~~~
 
-- 3.0b5 - MacOS, filter /private/… by default.
-- 3.0b4 - Readme fixes for PyPI.
-- 3.0a0 - Major rewrite to support Python 3.6,
+- 3.0 - Major rewrite to support Python 3.6,
   refactor shitty thirteen year-old code,
   remove deps on Dbus and Udisks.
   Still needs a lot of work.
