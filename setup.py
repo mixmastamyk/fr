@@ -14,9 +14,11 @@ except IOError:
 
 
 # install helper script for windows?
+extras_require    = {}
 scripts = [join(pkgname, pkgname)]
 if os.name == 'nt':
     scripts.append('fr.cmd')
+    extras_require['win'] = ['winstats', 'colorama']
 
 
 setup(
@@ -31,9 +33,7 @@ setup(
     packages          = [pkgname],
     scripts           = scripts,
     python_requires   = '>3.6.0',
-    extras_require    = {
-        'win': ['winstats', 'colorama'],
-    },
+    extras_require    = extras_require,
 
     long_description  = long_desc,
     classifiers       = trove_classifiers,
