@@ -40,6 +40,7 @@ etc, etc.
 
 ``fr`` 3.x has been tested on
 Ubuntu 18.04 Bionic "Tch-tch-tch-tch…",
+Fedora 39,
 Windows 7,
 and
 MacOS 10.13 "High Sierra,"
@@ -190,7 +191,8 @@ License
 Release Notes
 ~~~~~~~~~~~~~~~
 
-- 3.0 - Major rewrite to support Python 3.6,
+- 3.01 - Fix locale.format on Python 3.12, skip devtmpfs by default on Linux.
+- 3.00 - Major rewrite to support Python 3.6,
   refactor shitty thirteen year-old code,
   remove deps on Dbus and Udisks.
   Still needs a lot of work.

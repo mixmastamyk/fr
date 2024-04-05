@@ -144,7 +144,7 @@ def get_diskinfo(opts, show_all=False, local_only=False):
         if local_only and disk.isnet:
             continue
         disk.isimg = is_img = dev.startswith('loop')  # could be better
-        is_tmpfs = (device == 'tmpfs')
+        is_tmpfs = device in ('tmpfs', 'devtmpfs')
 
         # lots of junk here, so we throw away most entries
         for selector in selectors:
