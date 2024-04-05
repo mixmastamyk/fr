@@ -87,7 +87,10 @@ def fmtval(value, colorstr=None, precision=None, spacing=True, trunc=True,
     fmt = '%%.%sf' % precision
 
     # format with decimal mark, separators
-    result = locale.format(fmt, value, True)
+    try:
+        result = locale.format_string(fmt, value, True)  #  >= Py 3.7
+    except AttributeError:  # olden tymes
+        result = locale.format(fmt, value, True)
 
     if spacing:
         result = '%%%ss' % colwidth % result

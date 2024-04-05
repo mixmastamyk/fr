@@ -22,7 +22,6 @@ license         = license = 'GPLv3'
 repo_account    = 'mixmastamyk'
 repo_name       = 'fr'
 repo_provider   = 'github.com'
-#~ repo_provider   = 'bitbucket.org'
 repo_url        = 'https://%s/%s/%s' % (repo_provider, repo_account, repo_name)
 trove_classifiers = [
     'Development Status :: 4 - Beta',
